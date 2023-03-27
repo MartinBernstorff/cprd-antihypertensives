@@ -1,4 +1,4 @@
-from utils.utils import *
+from cprd_antihypertensives.cprd.utils.utils import *
 
 from cprd_antihypertensives.cprd.functions.modalities import *
 

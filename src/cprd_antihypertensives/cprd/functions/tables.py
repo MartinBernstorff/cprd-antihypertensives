@@ -1,5 +1,5 @@
 import pyspark.sql.functions as F
-from utils.utils import *
+from cprd_antihypertensives.cprd.cprd_antihypertensives.cprd.utils.utils import *
 
 from cprd_antihypertensives.cprd.base.table import (
     Clinical,

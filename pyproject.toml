@@ -21,6 +21,8 @@ requires-python = ">=3.9"
 dependencies = [
   "pydantic",
   "pyspark",
+  "numpy",
+  "ipykernel",
 ]
 
 [project.optional-dependencies]

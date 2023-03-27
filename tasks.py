@@ -1,7 +1,8 @@
+import getpass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from attr import dataclass
 from invoke import Context, Result, task
 
 
@@ -179,6 +180,13 @@ def pre_commit(c: Context):
 def mypy(c: Context):
     echo_header(f"{Emo.CLEAN} Running mypy")
     c.run("mypy .", pty=True)
+
+
+@task
+def branch(c: Context):
+    current_user = getpass.getuser()
+    new_branch_name = input("🌲 Branching from main. New branch name: ")
+    c.run(f"git checkout -b {new_branch_name} main")
 
 
 @task
