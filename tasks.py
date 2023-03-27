@@ -34,22 +34,15 @@ def git_init(c: Context):
         print(f"{Emo.GOOD} Git repository already initialized")
 
 
-def setup_venv(
+def check_conda(
     c: Context,
-    python_version: str,
 ):
-    venv_name = f'.venv{python_version.replace(".", "")}'
-
-    if not Path(venv_name).exists():
-        echo_header(
-            f"{Emo.DO} Creating virtual environment for {Emo.PY}{python_version}",
-        )
-        c.run(f"python{python_version} -m venv {venv_name}")
-        print(f"{Emo.GOOD} Virtual environment created")
+    # Check if in conda environment
+    if "CONDA_PREFIX" in c.run("env", hide=True).stdout:
+        print(f"{Emo.GOOD} In conda environment")
     else:
-        print(f"{Emo.GOOD} Virtual environment already exists")
-
-    c.run(f"source {venv_name}/bin/activate")
+        print(f"{Emo.FAIL} Not in conda environment. Exiting.")
+        exit(1)
 
 
 def _add_commit(c: Context, msg: Optional[str] = None):
@@ -189,14 +182,20 @@ def branch(c: Context):
 
 @task
 def install(c: Context):
+    check_conda(c)
     echo_header(f"{Emo.DO} Installing project")
     c.run("pip install -e '.[dev,tests]'")
 
 
 @task
-def setup(c: Context, python_version: str = "3.9"):
+def setup_java(c: Context):
+    c.run("conda install -c 'bioconda/label/cf201901' java-jdk")
+
+
+@task
+def setup(c: Context):
     git_init(c)
-    setup_venv(c, python_version=python_version)
+    setup_java(c)
     install(c)
 
 
