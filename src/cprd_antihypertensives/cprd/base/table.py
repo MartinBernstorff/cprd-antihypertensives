@@ -7,10 +7,10 @@ from pyspark.sql.dataframe import DataFrame
 #     return df.withColumnRenamed(old, new)
 from utils.utils import *
 
-from cprd_antihypertensives.cprd.config.utils import cvt_datestr2time, cvt_str2time
+from cprd_antihypertensives.cprd.config.utils import cvt_datestr2time
 
 DICT2KEEP = load_obj(
-    "/home/workspace/datasets/cprd/cprd2021/linkage/20_095_Results/Documentation/Set 21/linkage_coverage_dictv"
+    "/home/workspace/datasets/cprd/cprd2021/linkage/20_095_Results/Documentation/Set 21/linkage_coverage_dictv",
 )
 
 
@@ -25,37 +25,37 @@ class Patient(DataFrame):
     def yob_calibration(self):
         """decode yob to regular year"""
         return Patient(
-            self.withColumn("yob", self.yob.cast(pyspark.sql.types.IntegerType()))
+            self.withColumn("yob", self.yob.cast(pyspark.sql.types.IntegerType())),
         )
 
     def cvt_tod2date(self):
         """convert tod from string to date"""
         return Patient(
             self.withColumn("tod", cvt_datestr2time(self, "regenddate")).drop(
-                "regenddate"
-            )
+                "regenddate",
+            ),
         )
 
     def cvt_deathdate2date(self):
         """convert deathdate from string to date"""
         return Patient(
-            self.withColumn("cprd_ddate", cvt_datestr2time(self, "cprd_ddate"))
+            self.withColumn("cprd_ddate", cvt_datestr2time(self, "cprd_ddate")),
         )
 
     def cvt_crd2date(self):
         """convert crd from string to date"""
         return Patient(
             self.withColumn("crd", cvt_datestr2time(self, "regstartdate")).drop(
-                "regstartdate"
-            )
+                "regstartdate",
+            ),
         )
 
     def cvt_pracid(self):
         """get pracid from patid inorder to join with practice table"""
         return Patient(
             self.withColumn(
-                "pracid", self["pracid"].cast(pyspark.sql.types.IntegerType())
-            )
+                "pracid", self["pracid"].cast(pyspark.sql.types.IntegerType()),
+            ),
         )
 
 
@@ -67,16 +67,16 @@ class Clinical(DataFrame):
         """convert eventdate from strnig to date type"""
         return Clinical(
             self.withColumn("eventdate", cvt_datestr2time(self, "obsdate")).drop(
-                "obsdate"
-            )
+                "obsdate",
+            ),
         )
 
     def rm_eventdate_medcode_empty(self):
         """rm row with empty eventdate or medcode"""
         return Clinical(
             self.filter(
-                (F.col("obsdate") != "") & (F.col("medcodeid") != "")
-            ).withColumnRenamed("medcodeid", "medcode")
+                (F.col("obsdate") != "") & (F.col("medcodeid") != ""),
+            ).withColumnRenamed("medcodeid", "medcode"),
         )
 
     def filter_byobservation(self):
@@ -96,8 +96,8 @@ class Consultation(DataFrame):
         """convert eventdate from strnig to date type"""
         return Consultation(
             self.withColumn("eventdate", cvt_datestr2time(self, "consdate")).drop(
-                "consdate"
-            )
+                "consdate",
+            ),
         )
 
     def rm_eventdate_medcode_empty(self):
@@ -105,7 +105,7 @@ class Consultation(DataFrame):
         return Consultation(
             self.filter((F.col("consdate") != "") & (F.col("consmedcodeid") != ""))
             .withColumn("medcode", F.col("consmedcodeid"))
-            .drop("consmedcodeid")
+            .drop("consmedcodeid"),
         )
 
 
@@ -121,15 +121,15 @@ class Practice(DataFrame):
         """NOTE: UTS NOT POPULATED IN 2021 CUT -- FOR NOW, SET TO STATIC VALUE!!!"""
         return Practice(
             self.drop("uts").withColumn(
-                "uts", F.to_date(F.lit("10/10/0001"), "dd/mm/yyyy")
-            )
+                "uts", F.to_date(F.lit("10/10/0001"), "dd/mm/yyyy"),
+            ),
         )
 
     def intpracid(self):
         return Practice(
             self.withColumn(
-                "pracid", self["pracid"].cast(pyspark.sql.types.IntegerType())
-            )
+                "pracid", self["pracid"].cast(pyspark.sql.types.IntegerType()),
+            ),
         )
 
     def rmv_badPract(self):
@@ -192,11 +192,11 @@ class Diagnosis(DataFrame):
         """
 
         df = self.withColumn(
-            "goodstart", F.to_date(F.lit(DICT2KEEP["hes_apc"][0]), "dd/MM/yyyy")
+            "goodstart", F.to_date(F.lit(DICT2KEEP["hes_apc"][0]), "dd/MM/yyyy"),
         ).withColumn("goodend", F.to_date(F.lit(DICT2KEEP["hes_apc"][1]), "dd/MM/yyyy"))
 
         df = df.filter(F.col("admidate") >= F.col("goodstart")).filter(
-            F.col("admidate") < F.col("goodend")
+            F.col("admidate") < F.col("goodend"),
         )
         return Diagnosis(df.drop("goodend").drop("goodstart"))
 
@@ -230,13 +230,13 @@ class Therapy(DataFrame):
         return Therapy(
             self.filter((F.col("issuedate") != "") & (F.col("prodcodeid") != ""))
             .withColumnRenamed("prodcodeid", "prodcode")
-            .withColumnRenamed("issuedate", "eventdate")
+            .withColumnRenamed("issuedate", "eventdate"),
         )
 
     def cvtEventDate2Time(self):
         """convert eventdate from strnig to date type"""
         return Therapy(
-            self.withColumn("eventdate", cvt_datestr2time(self, "eventdate"))
+            self.withColumn("eventdate", cvt_datestr2time(self, "eventdate")),
         )
 
 
@@ -293,10 +293,10 @@ class Proc_HES(DataFrame):
         """
 
         df = self.withColumn(
-            "goodstart", F.to_date(F.lit(DICT2KEEP["hes_apc"][0]), "dd/MM/yyyy")
+            "goodstart", F.to_date(F.lit(DICT2KEEP["hes_apc"][0]), "dd/MM/yyyy"),
         ).withColumn("goodend", F.to_date(F.lit(DICT2KEEP["hes_apc"][1]), "dd/MM/yyyy"))
 
         df = df.filter(F.col("evdate") >= F.col("goodstart")).filter(
-            F.col("evdate") < F.col("goodend")
+            F.col("evdate") < F.col("goodend"),
         )
         return Proc_HES(df.drop("goodend").drop("goodstart"))

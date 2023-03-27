@@ -2,7 +2,7 @@ import pyspark.sql.functions as F
 from pyspark.sql import Window
 
 from cprd_antihypertensives.cprd.base.table import *
-from cprd_antihypertensives.cprd.functions import merge, tables
+from cprd_antihypertensives.cprd.functions import tables
 
 
 class PredictorExtractorBase:
@@ -37,7 +37,7 @@ class PredictorExtractorBase:
 
         # join dataframe with demographics keep patients existing in both and before study entry
         df = df.join(demographics, "patid", "inner").where(
-            F.col("eventdate") < F.col(col_baseline)
+            F.col("eventdate") < F.col(col_baseline),
         )
 
         if span_before_baseline_month is not None:
@@ -101,7 +101,7 @@ class PredictorExtractorBase:
         # keep all records before the baseline date
         demographics = demographics.select(["patid", col_baseline])
         df = df.join(demographics, "patid", "inner").where(
-            F.col("eventdate") <= F.col(col_baseline)
+            F.col("eventdate") <= F.col(col_baseline),
         )
 
         # cast positive patients with exist = 1
@@ -130,7 +130,7 @@ class PredictorExtractorBase:
         # separate positive patients and negative patients and set exist = 0 for negative patients
         positive = demographics.filter(F.col("exist").isNotNull())
         negative = demographics.filter(F.col("exist").isNull()).withColumn(
-            "exist", F.lit(0)
+            "exist", F.lit(0),
         )
 
         # join positive and negative group and select only patid and col columns
@@ -187,7 +187,7 @@ class PredictorExtractorBase:
         df: the dataframe to be checked includes patid, age, eventdate, and code column
         """
         patient = tables.retrieve_patient(dir=file["patient"], spark=spark).select(
-            ["patid", "yob"]
+            ["patid", "yob"],
         )
         df = df.join(patient, "patid", "inner")
         df = EHR(df).cal_age("eventdate", "yob", year=False, name="age")
@@ -275,7 +275,7 @@ class BEHRTCausal(PredictorExtractorBase):
             # print('exclude code in action: ' ,  exclcode)
             data = data.where(
                 (F.col("eventdate") != F.col(col_entry))
-                | (F.col(col_code).isin(*exclcode))
+                | (F.col(col_code).isin(*exclcode)),
             )
             # print(data.count())
 

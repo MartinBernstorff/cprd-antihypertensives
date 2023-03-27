@@ -5,7 +5,6 @@ from cprd_antihypertensives.cprd.base.table import (
     Clinical,
     Consultation,
     Diagnosis,
-    Hes,
     Patient,
     Practice,
     Proc_HES,
@@ -20,7 +19,7 @@ from cprd_antihypertensives.cprd.config.spark import (
 from cprd_antihypertensives.cprd.config.utils import cvt_str2time, rename_col
 
 DICT2KEEP = load_obj(
-    "/home/workspace/datasets/cprd/cprd2021/linkage/20_095_Results/Documentation/Set 21/linkage_coverage_dictv"
+    "/home/workspace/datasets/cprd/cprd2021/linkage/20_095_Results/Documentation/Set 21/linkage_coverage_dictv",
 )
 
 
@@ -187,7 +186,7 @@ def retrieve_demographics(patient, practice, practiceLink=True):
 
     else:
         demographic = patient.withColumnRenamed("crd", "startdate").withColumnRenamed(
-            "tod", "enddate"
+            "tod", "enddate",
         )
 
     return demographic
@@ -210,11 +209,11 @@ def retrieve_death(dir, spark):
     death = read_txt(spark.sc, spark.sqlContext, path=dir)
     death = death.withColumn("dod", cvt_str2time(death, "dod", year_first=False))
     death = death.withColumn(
-        "goodstart", F.to_date(F.lit(DICT2KEEP["ons_death"][0]), "dd/MM/yyyy")
+        "goodstart", F.to_date(F.lit(DICT2KEEP["ons_death"][0]), "dd/MM/yyyy"),
     ).withColumn("goodend", F.to_date(F.lit(DICT2KEEP["ons_death"][1]), "dd/MM/yyyy"))
 
     death = death.filter(F.col("dod") >= F.col("goodstart")).filter(
-        F.col("dod") < F.col("goodend")
+        F.col("dod") < F.col("goodend"),
     )
     return death.drop("goodend").drop("goodstart")
 
@@ -232,7 +231,7 @@ def retrieve_bnf_prod_crossmapLEGACY(dir, spark, cut4=True):
         extract_bnf = F.udf(
             lambda x: "/".join([each[0:4] for each in x.split("/")])
             if "/" in x
-            else x[0:4]
+            else x[0:4],
         )
 
     else:
@@ -383,11 +382,11 @@ def retrieve_additional(dir, spark):
 
 def retrieve_procedure(dir, spark):
     hes_procedure = read_txtzip(spark.sc, spark.sqlContext, dir).select(
-        ["patid", "OPCS", "evdate"]
+        ["patid", "OPCS", "evdate"],
     )
     hes_procedure = rename_col(hes_procedure, "evdate", "eventdate")
     hes_procedure = hes_procedure.withColumn(
-        "eventdate", cvt_str2time(hes_procedure, "eventdate", year_first=False)
+        "eventdate", cvt_str2time(hes_procedure, "eventdate", year_first=False),
     )
     return hes_procedure
 

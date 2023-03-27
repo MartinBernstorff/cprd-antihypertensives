@@ -1,17 +1,5 @@
-import os
 
 import pyspark.sql.functions as F
-
-from cprd_antihypertensives.cprd.base.table import (
-    Clinical,
-    Diagnosis,
-    Hes,
-    Patient,
-    Practice,
-    Therapy,
-)
-from cprd_antihypertensives.cprd.config.spark import read_csv, read_txt, read_txtzip
-from cprd_antihypertensives.cprd.config.utils import cvt_str2time
 
 
 def retrieve_eligible_time(demographics, death, return_dod=False):
@@ -74,7 +62,7 @@ def med2read_mapping(crossmap, clinical):
     # keep all records that belong to diagnoses
     cprd = cprd.filter(
         F.col("firstLetter").isin(
-            *["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "Z", "U"]
+            *["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "Z", "U"],
         )
         is False,
     ).select(["patid", "eventdate", "medcode", "readcode", "source"])
@@ -91,7 +79,7 @@ def med2sno_mapping(crossmap, clinical):
     """
 
     cprd = clinical.join(crossmap, "medcode", "left").select(
-        ["patid", "eventdate", "medcode", "snomed", "source"]
+        ["patid", "eventdate", "medcode", "snomed", "source"],
     )
 
     # keep all records that belong to diagnoses

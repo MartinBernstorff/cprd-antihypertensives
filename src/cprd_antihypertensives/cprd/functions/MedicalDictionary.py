@@ -1,17 +1,6 @@
-import datetime
-import glob
-import math
-import random
-from typing import Any
 
-import numpy as np
-import pyspark.sql.functions as F
-from pyspark.sql import Window
-from pyspark.sql.types import IntegerType
 from utils.utils import *
 
-from cprd_antihypertensives.cprd.config.spark import read_parquet
-from cprd_antihypertensives.cprd.functions import merge, tables
 from cprd_antihypertensives.cprd.functions.modalities import *
 
 

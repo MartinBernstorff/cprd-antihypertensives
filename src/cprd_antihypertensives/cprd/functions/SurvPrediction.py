@@ -1,14 +1,8 @@
-import datetime
-import random
-from typing import Any
 
 import pyspark.sql.functions as F
 from pyspark.sql import Window
-from pyspark.sql.types import IntegerType
 
-from cprd_antihypertensives.cprd.config.spark import read_parquet
 from cprd_antihypertensives.cprd.config.utils import *
-from cprd_antihypertensives.cprd.functions import merge, tables
 from cprd_antihypertensives.cprd.functions.modalities import *
 
 # many thanks to YLi for this writeup
@@ -30,7 +24,7 @@ class SurvRiskPredictionBase:
 
         # keep records that belongs to a condtion provided by condition list
         source = source.filter(F.col(column).isin(*condition)).select(
-            ["patid", "eventdate", column]
+            ["patid", "eventdate", column],
         )
 
         # take first of the eventdate by patid
@@ -72,7 +66,7 @@ class SurvRiskPredictionBase:
         )
         demographics_with_event_a = (
             demographics_with_event.filter(
-                F.col("eventdate") > F.col("endfollowupdate")
+                F.col("eventdate") > F.col("endfollowupdate"),
             )
             .withColumn("event", F.lit(0))
             .withColumn("time", F.col("endfollowupdate"))
@@ -80,7 +74,7 @@ class SurvRiskPredictionBase:
         demographics_with_event_b = (
             demographics_with_event.filter(
                 (F.col("eventdate") < F.col("endfollowupdate"))
-                & (F.col("eventdate") > F.col("study_entry"))
+                & (F.col("eventdate") > F.col("study_entry")),
             )
             .withColumn("event", F.lit(1))
             .withColumn("time", F.col("eventdate"))
@@ -95,10 +89,10 @@ class SurvRiskPredictionBase:
 
         # transform time from 'date' to 'months'
         time2eventdiff = F.unix_timestamp("time", "yyyy-MM-dd") - F.unix_timestamp(
-            "study_entry", "yyyy-MM-dd"
+            "study_entry", "yyyy-MM-dd",
         )
         demographics = demographics.withColumn("time", time2eventdiff).withColumn(
-            "time", (F.col("time") / 3600 / 24 / 30).cast("integer")
+            "time", (F.col("time") / 3600 / 24 / 30).cast("integer"),
         )
         return demographics
 
@@ -123,7 +117,7 @@ class SurvRiskPredictionBase:
         ]
         cause_cols = [F.col(each) for each in cause_cols]
         death = death.withColumn("cause", F.array(cause_cols)).select(
-            ["patid", "cause", "dod"]
+            ["patid", "cause", "dod"],
         )
         rm_dot = F.udf(lambda x: x.replace(".", ""))
         death = (
@@ -132,6 +126,6 @@ class SurvRiskPredictionBase:
             .filter(F.col("cause").isin(*condition))
         )
         death = death.groupBy("patid").agg(
-            F.first("dod").alias("eventdate"), F.first("cause").alias(column)
+            F.first("dod").alias("eventdate"), F.first("cause").alias(column),
         )
         return death

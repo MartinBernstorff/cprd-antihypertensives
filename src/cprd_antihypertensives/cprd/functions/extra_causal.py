@@ -1,16 +1,8 @@
-import datetime
-import os
-import random
-import shutil
-from typing import Any
 
 import pyspark.sql.functions as F
 from pyspark.sql import Window
-from pyspark.sql.types import IntegerType
 
-from cprd_antihypertensives.cprd.config.spark import read_parquet
 from cprd_antihypertensives.cprd.config.utils import *
-from cprd_antihypertensives.cprd.functions import merge, tables
 from cprd_antihypertensives.cprd.functions.modalities import *
 
 
@@ -21,18 +13,18 @@ class RiskPredictionBase:
 
     def define_label(self, demographics, source, condition, column, death):
         demographics = self.get_label_from_records(
-            demographics, source=source, condition=condition, column=column
+            demographics, source=source, condition=condition, column=column,
         )
         label_defined = demographics.filter(F.col("label").isin(*[0, 1]))
         label_unclear = demographics.filter(F.col("label").isin(*[0, 1]) is False)
         label_mark = self.get_label_from_death_registration(
-            label_unclear, death, condition
+            label_unclear, death, condition,
         )
         demographics = label_defined.union(label_mark)
         return demographics
 
     def exclusion_inclusion_record(
-        self, demographics, criteria, source, column, exclusion=True
+        self, demographics, criteria, source, column, exclusion=True,
     ):
         """
         this function is to check the if patient should be included or excluded because contains certain
@@ -68,7 +60,7 @@ class RiskPredictionBase:
         else:
             demographics = demographics.join(subset, "patid", "left")
             demographics = demographics.filter(F.col("redundant").isNull()).drop(
-                "redundant"
+                "redundant",
             )
 
         return demographics, subset
@@ -87,15 +79,15 @@ class RiskPredictionBase:
 
         # if an event happens before the end of follow up, then a positive case is identified
         positive = demographics.where(
-            F.col("eventdate") <= F.col("endFollowUp")
+            F.col("eventdate") <= F.col("endFollowUp"),
         ).withColumn("label", F.lit(1))
         time2eventdiff = F.unix_timestamp("eventdate", "yyyy-MM-dd") - F.unix_timestamp(
-            "study_entry", "yyyy-MM-dd"
+            "study_entry", "yyyy-MM-dd",
         )
         positive = (
             positive.withColumn("time2event", time2eventdiff)
             .withColumn(
-                "time2event", (F.col("time2event") / 3600 / 24 / 30).cast("integer")
+                "time2event", (F.col("time2event") / 3600 / 24 / 30).cast("integer"),
             )
             .select(["patid", "label", "time2event"])
         )
@@ -154,7 +146,7 @@ class RiskPredictionBase:
 
         # keep records that belongs to a condtion provided by condition list
         source = source.filter(F.col(column).isin(*condition)).select(
-            ["patid", "eventdate", column]
+            ["patid", "eventdate", column],
         )
 
         # take first of the eventdate by patid
@@ -191,7 +183,7 @@ class RiskPredictionBase:
         elif incidence == "some":
             if incidence_exceptions is None:
                 raise ValueError(
-                    "Not fully incidence as stated in the parameter, incidence_exception='some' but no exceptions provided. please provide excpetions in incidence_exceptions"
+                    "Not fully incidence as stated in the parameter, incidence_exception='some' but no exceptions provided. please provide excpetions in incidence_exceptions",
                 )
 
             else:
@@ -211,7 +203,7 @@ class RiskPredictionBase:
                 demographics = demographics.join(source, "patid", "left")
                 #                 print(demographics.show())
                 excludePotential = demographics.where(
-                    F.col("eventdate") <= F.col("study_entry")
+                    F.col("eventdate") <= F.col("study_entry"),
                 )
                 includeterms = incidence_exceptions
                 exclude = excludePotential.filter(~F.col(column).isin(*includeterms))
@@ -229,7 +221,7 @@ class RiskPredictionBase:
                 keep = keep.select(["patid", "study_entry"]).dropDuplicates()
 
                 excludePotentialPats = excludePotential.select(
-                    ["patid", "study_entry"]
+                    ["patid", "study_entry"],
                 ).dropDuplicates()
                 demographics = (
                     demographics.alias("a")
@@ -245,7 +237,7 @@ class RiskPredictionBase:
                 #                 print(demographics.show())
                 demographicsPats = demographics.select(["patid"]).dropDuplicates()
                 demographicsDates = demographics.select(
-                    ["patid", "eventdate", column, "study_entry"]
+                    ["patid", "eventdate", column, "study_entry"],
                 )
                 w = Window.partitionBy("patid").orderBy("eventdate")
                 demographicsDates = (
@@ -260,7 +252,7 @@ class RiskPredictionBase:
                 demographicsDates = demographicsDates.drop(column)
                 # in case
                 demographicsDates = demographicsDates.where(
-                    F.col("eventdate") > F.col("study_entry")
+                    F.col("eventdate") > F.col("study_entry"),
                 )
                 demographicsDates = demographicsDates.drop(column).drop("study_entry")
                 demographics = demographicsPats.join(demographicsDates, "patid", "left")
@@ -270,11 +262,11 @@ class RiskPredictionBase:
                 # in the keep patients, only look at records after study entry and see if they have label post study entry
                 demographics_4keep_wSource = keep.join(sourceOrig, "patid", "left")
                 demographics_4keep_wSourcePOS = demographics_4keep_wSource.where(
-                    F.col("eventdate") > F.col("study_entry")
+                    F.col("eventdate") > F.col("study_entry"),
                 )
                 demographics_4keep_wSourcePOS = (
                     demographics_4keep_wSourcePOS.withColumn(
-                        column, F.first(column).over(w)
+                        column, F.first(column).over(w),
                     )
                     .groupBy("patid")
                     .agg(
@@ -284,14 +276,14 @@ class RiskPredictionBase:
                     )
                 )
                 demographics_4keep_wSourcePOS = demographics_4keep_wSourcePOS.drop(
-                    column
+                    column,
                 )
 
                 demographics_4keep_wSourceNEG = (
                     keep.alias("a")
                     .join(
                         demographics_4keep_wSourcePOS.select(
-                            ["patid", "eventdate"]
+                            ["patid", "eventdate"],
                         ).alias("b"),
                         F.col("a.patid") == F.col("b.patid"),
                         "left",
@@ -301,19 +293,19 @@ class RiskPredictionBase:
                 )
 
                 demographics_4keep_wSource = demographics_4keep_wSourcePOS.select(
-                    ["patid"]
+                    ["patid"],
                 ).union(demographics_4keep_wSourceNEG.select(["patid"]))
                 demographics_4keep_wSource = demographics_4keep_wSource.join(
-                    demographics_4keep_wSourcePOS, "patid", "left"
+                    demographics_4keep_wSourcePOS, "patid", "left",
                 ).drop("study_entry")
 
                 demographics = demographics.join(originalDemo4Backup, "patid", "left")
                 demographics_4keep_wSource = demographics_4keep_wSource.join(
-                    originalDemo4Backup, "patid", "left"
+                    originalDemo4Backup, "patid", "left",
                 )
                 # union with larger demographics which was free of potentialyl exlcuded patients
                 demographics_4keep_wSource = demographics_4keep_wSource.select(
-                    demographics.columns
+                    demographics.columns,
                 )
 
                 demographics = demographics.union(demographics_4keep_wSource)
@@ -385,7 +377,7 @@ class RiskPredictionBase:
         ]
         cause_cols = [F.col(each) for each in cause_cols]
         death = death.withColumn("cause", F.array(cause_cols)).select(
-            ["patid", "cause"]
+            ["patid", "cause"],
         )
         rm_dot = F.udf(lambda x: x.replace(".", ""))
         death = (
@@ -401,13 +393,13 @@ class RiskPredictionBase:
         )
         # join death with demographics and calculate time2event
         time2eventdiff = F.unix_timestamp("enddate", "yyyy-MM-dd") - F.unix_timestamp(
-            "study_entry", "yyyy-MM-dd"
+            "study_entry", "yyyy-MM-dd",
         )
         demographics = (
             demographics.join(death, "patid", "left")
             .withColumn("time2event", time2eventdiff)
             .withColumn(
-                "time2event", (F.col("time2event") / 3600 / 24 / 30).cast("integer")
+                "time2event", (F.col("time2event") / 3600 / 24 / 30).cast("integer"),
             )
         )
         #         demographics.show()
@@ -446,13 +438,13 @@ class RiskPredictionBase:
         if check_death:
             label_unclear = demographics.filter(F.col("label").isNull())
             label_define_death = self.get_label_from_death_registration(
-                demographics=label_unclear, death=death, condition=condition
+                demographics=label_unclear, death=death, condition=condition,
             )
             demographics = label_defined.union(label_define_death)
         else:
             # demographics = label_defined
             label_unclear = demographics.filter(F.col("label").isNull()).withColumn(
-                "label", F.lit(0)
+                "label", F.lit(0),
             )
             demographics = label_defined.union(label_unclear)
 
@@ -496,7 +488,7 @@ class CausalOutcomePrediction(RiskPredictionBase):
         if self.exclusion_diagnosis is not None:
             if diagnosis is None:
                 raise ValueError(
-                    "exclusion criteria for diagnosis is not None, provide diagnosis dataframe"
+                    "exclusion criteria for diagnosis is not None, provide diagnosis dataframe",
                 )
             else:
                 for _diag, code in self.exclusion_diagnosis.items():
@@ -511,7 +503,7 @@ class CausalOutcomePrediction(RiskPredictionBase):
         if self.exclusion_medication is not None:
             if medication is None:
                 raise ValueError(
-                    "exclusion criteria for medication is not None, provide medication data frame"
+                    "exclusion criteria for medication is not None, provide medication data frame",
                 )
             else:
                 for _med, code in self.exclusion_medication.items():
