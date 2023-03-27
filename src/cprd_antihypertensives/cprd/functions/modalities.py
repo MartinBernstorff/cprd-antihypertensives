@@ -34,7 +34,9 @@ def retrieve_medications(
         patient = tables.retrieve_patient(dir=file["patient"], spark=spark)
         practice = tables.retrieve_practice(dir=file["practice"], spark=spark)
         demographics = tables.retrieve_demographics(
-            patient=patient, practice=practice, practiceLink=practiceLink,
+            patient=patient,
+            practice=practice,
+            practiceLink=practiceLink,
         )
         death = tables.retrieve_death(dir=file["death"], spark=spark)
 
@@ -58,7 +60,8 @@ def retrieve_medications(
 
     if mapping == "bnfvtm":
         crossmap = tables.retrieve_bnfvtm_prod_crossmap(
-            dir=file["prod2bnf_vtm"], spark=spark,
+            dir=file["prod2bnf_vtm"],
+            spark=spark,
         )
         therapy = merge.bnf_mapping(crossmap=crossmap, therapy=therapy)
     elif mapping == "bnf":
@@ -71,7 +74,11 @@ def retrieve_medications(
 
 
 def retrieve_diagnoses(
-    file, spark, mapping="sno2icd", duration=(1985, 2021), practiceLink=True,
+    file,
+    spark,
+    mapping="sno2icd",
+    duration=(1985, 2021),
+    practiceLink=True,
 ):
     """
     file contains all necessary file for processing
@@ -86,11 +93,14 @@ def retrieve_diagnoses(
     patient = tables.retrieve_patient(dir=file["patient"], spark=spark)
     practice = tables.retrieve_practice(dir=file["practice"], spark=spark)
     demographics = tables.retrieve_demographics(
-        patient=patient, practice=practice, practiceLink=practiceLink,
+        patient=patient,
+        practice=practice,
+        practiceLink=practiceLink,
     )
     death = tables.retrieve_death(dir=file["death"], spark=spark)
     clinical = tables.retrieve_clinical(
-        dir=file["clinical"], spark=spark,
+        dir=file["clinical"],
+        spark=spark,
     ).filter_byobservation()
     hes = tables.retrieve_hes_diagnoses(dir=file["diagnosis_hes"], spark=spark)
 
@@ -109,7 +119,8 @@ def retrieve_diagnoses(
 
     # process CPRD and HES data
     clinical = clinical.select(["patid", "eventdate", "medcode"]).withColumn(
-        "source", F.lit("CPRD"),
+        "source",
+        F.lit("CPRD"),
     )
     hes = cprd_table.Hes(
         hes.select(["patid", "eventdate", "ICD"]).withColumn("source", F.lit("HES")),
@@ -162,7 +173,9 @@ def retrieve_diagnoses_cprd(
         patient = tables.retrieve_patient(dir=file["patient"], spark=spark)
         practice = tables.retrieve_practice(dir=file["practice"], spark=spark)
         demographics = tables.retrieve_demographics(
-            patient=patient, practice=practice, practiceLink=practiceLink,
+            patient=patient,
+            practice=practice,
+            practiceLink=practiceLink,
         )
         death = tables.retrieve_death(dir=file["death"], spark=spark)
 
@@ -173,7 +186,8 @@ def retrieve_diagnoses_cprd(
         time = demographics.select(["patid", "startdate", "enddate"])
 
     clinical = tables.retrieve_clinical(
-        dir=file["clinical"], spark=spark,
+        dir=file["clinical"],
+        spark=spark,
     ).filter_byobservation()
 
     # select records between start and end date, which are valid records for usage
@@ -188,7 +202,8 @@ def retrieve_diagnoses_cprd(
 
     # process CPRD
     clinical = clinical.select(["patid", "eventdate", "medcode"]).withColumn(
-        "source", F.lit("CPRD"),
+        "source",
+        F.lit("CPRD"),
     )
     # map medcode to read code
     # if read_mapping:
@@ -311,7 +326,11 @@ def retrieve_hdlr(file, spark, duration=(1985, 2021), usable_range=(0, 10)):
         "medcode"
     ]
     hdlr = retrieve_by_enttype(
-        file, spark, enttype=hdlr, id_str="10", duration=duration,
+        file,
+        spark,
+        enttype=hdlr,
+        id_str="10",
+        duration=duration,
     )
     hdlr = hdlr.where(
         (F.col("value") > usable_range[0]) & (F.col("value") < usable_range[1]),
@@ -343,7 +362,11 @@ def retrieve_sodium(file, spark, duration=(1985, 2021), usable_range=(20, 200)):
     ]
 
     sodium = retrieve_by_enttype(
-        file, spark, enttype=sodium, id_str="10", duration=duration,
+        file,
+        spark,
+        enttype=sodium,
+        id_str="10",
+        duration=duration,
     )
     sodium = sodium.where(
         (F.col("value") > usable_range[0]) & (F.col("value") < usable_range[1]),
@@ -364,7 +387,11 @@ def retrieve_drinking_status(file, spark, duration=(1985, 2021)):
     """
 
     drink = retrieve_by_enttype(
-        file, spark, enttype=["1221271018"], id_str="10", duration=duration,
+        file,
+        spark,
+        enttype=["1221271018"],
+        id_str="10",
+        duration=duration,
     )
     drink = drink.filter(F.col("value").isNotNull())
     drink = drink.groupby(["patid", "eventdate"]).agg(F.mean("value").alias("alcohol"))
@@ -392,20 +419,35 @@ def retrieve_smoking_status(file, spark, duration=(1985, 2021)):
     ]["medcode"]
 
     smoke = retrieve_by_enttype(
-        file, spark, enttype=smoke, id_str="10", duration=duration,
+        file,
+        spark,
+        enttype=smoke,
+        id_str="10",
+        duration=duration,
     ).withColumn("smoke", F.lit(1))
     ex_smoke = retrieve_by_enttype(
-        file, spark, enttype=ex_smoke, id_str="10", duration=duration,
+        file,
+        spark,
+        enttype=ex_smoke,
+        id_str="10",
+        duration=duration,
     ).withColumn("smoke", F.lit(2))
     no_smoke = retrieve_by_enttype(
-        file, spark, enttype=no_smoke, id_str="10", duration=duration,
+        file,
+        spark,
+        enttype=no_smoke,
+        id_str="10",
+        duration=duration,
     ).withColumn("smoke", F.lit(3))
 
     return smoke.union(ex_smoke).union(no_smoke).select("patid", "eventdate", "smoke")
 
 
 def retrieve_diastolic_bp_measurement(
-    file, spark, duration=(1985, 2021), usable_range=(10, 140),
+    file,
+    spark,
+    duration=(1985, 2021),
+    usable_range=(10, 140),
 ):
     """
     get the bp measurement diastolic pressure (low number )
@@ -428,7 +470,10 @@ def retrieve_diastolic_bp_measurement(
 
 
 def retrieve_systolic_bp_measurement(
-    file, spark, duration=(1985, 2021), usable_range=(50, 300),
+    file,
+    spark,
+    duration=(1985, 2021),
+    usable_range=(50, 300),
 ):
     """
     get the bp measurement, systolic pressure (high number)
@@ -451,7 +496,10 @@ def retrieve_systolic_bp_measurement(
 
 
 def retrieve_heartrate_measurement(
-    file, spark, duration=(1985, 2021), usable_range=(30, 250),
+    file,
+    spark,
+    duration=(1985, 2021),
+    usable_range=(30, 250),
 ):
     """
     :param file:
@@ -475,7 +523,10 @@ def retrieve_heartrate_measurement(
 
 
 def retrieve_creatinine_measurement(
-    file, spark, duration=(1985, 2021), usable_range=(0, 250),
+    file,
+    spark,
+    duration=(1985, 2021),
+    usable_range=(0, 250),
 ):
     """
     get the creat measurement
@@ -502,7 +553,10 @@ def retrieve_creatinine_measurement(
 
 
 def retrieve_eGFR_measurement(
-    file, spark, duration=(1985, 2021), usable_range=(0, 250),
+    file,
+    spark,
+    duration=(1985, 2021),
+    usable_range=(0, 250),
 ):
     """
     get the egfr measurement, systolic pressure (high number)
@@ -559,7 +613,8 @@ def retrieve_test_LEGACY(file, spark, duration=(1985, 2021)):
 
     # create lookup table for easy tokenizing - first ten characters of the name of the test type
     ent["mapVal"] = ent[["enttype", "description"]].apply(
-        lambda x: x[1][:10] + "ENT_" + str(x[0]), axis=1,
+        lambda x: x[1][:10] + "ENT_" + str(x[0]),
+        axis=1,
     )
     lookup = ent[ent.filetype == "Test"].set_index("enttype").to_dict()["mapVal"]
     lookup = {str(x): lookup[x].replace(" ", "") for x in lookup}
@@ -665,7 +720,10 @@ def retrieve_procedure(
     )
 
     procedure = check_time(
-        procedure, "eventdate", time_a=duration[0], time_b=duration[1],
+        procedure,
+        "eventdate",
+        time_a=duration[0],
+        time_b=duration[1],
     )
 
     return procedure

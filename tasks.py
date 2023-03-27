@@ -235,7 +235,6 @@ def test(c: Context):
 @task
 def lint(c: Context):
     pre_commit(c)
-    #  mypy(c)
 
 
 @task
