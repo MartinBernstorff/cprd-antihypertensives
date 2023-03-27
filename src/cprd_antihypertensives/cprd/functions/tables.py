@@ -1,10 +1,27 @@
-from CPRD.base.table import Patient,Practice,Clinical, Diagnosis, Therapy, Hes, Consultation, Proc_HES
-from CPRD.config.spark import read_txt, read_csv, read_txtzip, read_parquet
 import pyspark.sql.functions as F
-from CPRD.config.utils import cvt_str2time
-from CPRD.config.utils import rename_col
 from utils.utils import *
-DICT2KEEP = load_obj('/home/workspace/datasets/cprd/cprd2021/linkage/20_095_Results/Documentation/Set 21/linkage_coverage_dictv')
+
+from cprd_antihypertensives.cprd.base.table import (
+    Clinical,
+    Consultation,
+    Diagnosis,
+    Hes,
+    Patient,
+    Practice,
+    Proc_HES,
+    Therapy,
+)
+from cprd_antihypertensives.cprd.config.spark import (
+    read_csv,
+    read_parquet,
+    read_txt,
+    read_txtzip,
+)
+from cprd_antihypertensives.cprd.config.utils import cvt_str2time, rename_col
+
+DICT2KEEP = load_obj(
+    "/home/workspace/datasets/cprd/cprd2021/linkage/20_095_Results/Documentation/Set 21/linkage_coverage_dictv"
+)
 
 
 def retrieve_patient(dir, spark):
@@ -19,8 +36,16 @@ def retrieve_patient(dir, spark):
         Args:
             dir: folder contains patient table in .txt
     """
-    patient = Patient(read_txtzip(spark.sc, spark.sqlContext, path=dir)) \
-        .accept_flag().yob_calibration().cvt_crd2date().cvt_tod2date().cvt_deathdate2date().cvt_pracid().drop('acceptable')
+    patient = (
+        Patient(read_txtzip(spark.sc, spark.sqlContext, path=dir))
+        .accept_flag()
+        .yob_calibration()
+        .cvt_crd2date()
+        .cvt_tod2date()
+        .cvt_deathdate2date()
+        .cvt_pracid()
+        .drop("acceptable")
+    )
 
     return patient
 
@@ -33,8 +58,11 @@ def retrieve_clinical(dir, spark):
     :return:
     """
 
-    clinical = Clinical(read_txtzip(spark.sc, spark.sqlContext, path=dir)).rm_eventdate_medcode_empty() \
+    clinical = (
+        Clinical(read_txtzip(spark.sc, spark.sqlContext, path=dir))
+        .rm_eventdate_medcode_empty()
         .cvtEventDate2Time()
+    )
 
     return clinical
 
@@ -47,10 +75,14 @@ def retrieve_consultation(dir, spark):
     :return:
     """
 
-    consultation = Consultation(read_txtzip(spark.sc, spark.sqlContext, path=dir)).rm_eventdate_medcode_empty() \
+    consultation = (
+        Consultation(read_txtzip(spark.sc, spark.sqlContext, path=dir))
+        .rm_eventdate_medcode_empty()
         .cvtEventDate2Time()
+    )
 
     return consultation
+
 
 def retrieve_hes_diagnoses(dir, spark):
     """
@@ -60,10 +92,17 @@ def retrieve_hes_diagnoses(dir, spark):
     :return: ['patid', "ICD", "eventdate"]
     """
 
-    hes_diagnosis = rename_col(Diagnosis(read_txt(spark.sc, spark.sqlContext, path=dir))
-                               .rm_date_icd_empty().cvt_admidate2date().hes_apc_timefilter(), old='admidate', new='eventdate')
+    hes_diagnosis = rename_col(
+        Diagnosis(read_txt(spark.sc, spark.sqlContext, path=dir))
+        .rm_date_icd_empty()
+        .cvt_admidate2date()
+        .hes_apc_timefilter(),
+        old="admidate",
+        new="eventdate",
+    )
 
     return hes_diagnosis
+
 
 def retrieve_hes_proc(dir, spark):
     """
@@ -73,10 +112,14 @@ def retrieve_hes_proc(dir, spark):
     :return: ['patid', "OPCS", "eventdate"]
     """
 
-    hesproc = rename_col(Proc_HES(read_txt(spark.sc, spark.sqlContext, path=dir))\
-                         .rm_date_opcs_empty().cvt_admidate2date().hes_apc_timefilter(), old='evdate', new='eventdate')
-
-
+    hesproc = rename_col(
+        Proc_HES(read_txt(spark.sc, spark.sqlContext, path=dir))
+        .rm_date_opcs_empty()
+        .cvt_admidate2date()
+        .hes_apc_timefilter(),
+        old="evdate",
+        new="eventdate",
+    )
 
     return hesproc
 
@@ -90,7 +133,12 @@ def retrieve_practice(dir, spark):
     :param spark: initialised spark project contains spark.sc, and spark.sqlContext
     :return: practice spark dataframe
     """
-    practice = Practice(read_txtzip(spark.sc, spark.sqlContext, path=dir)).cvt_lcd2date().cvt_uts2date().rmv_badPract()
+    practice = (
+        Practice(read_txtzip(spark.sc, spark.sqlContext, path=dir))
+        .cvt_lcd2date()
+        .cvt_uts2date()
+        .rmv_badPract()
+    )
     return practice
 
 
@@ -106,7 +154,11 @@ def retrieve_therapy(dir, spark):
     :return: therapy dataframe
     """
 
-    therapy = Therapy(read_txtzip(spark.sc, spark.sqlContext, path=dir)).rm_eventdate_prodcode_empty().cvtEventDate2Time()
+    therapy = (
+        Therapy(read_txtzip(spark.sc, spark.sqlContext, path=dir))
+        .rm_eventdate_prodcode_empty()
+        .cvtEventDate2Time()
+    )
     return therapy
 
 
@@ -125,19 +177,24 @@ def retrieve_demographics(patient, practice, practiceLink=True):
     :return: demographic dataframe
     """
     if practiceLink:
-        joinType='inner'
-        demographic = patient.join(practice, patient.pracid == practice.pracid, joinType).drop('pracid'). \
-            withColumn('startdate', F.greatest('uts', 'crd')).withColumn('enddate', F.least('tod', 'lcd'))
+        joinType = "inner"
+        demographic = (
+            patient.join(practice, patient.pracid == practice.pracid, joinType)
+            .drop("pracid")
+            .withColumn("startdate", F.greatest("uts", "crd"))
+            .withColumn("enddate", F.least("tod", "lcd"))
+        )
 
     else:
-        demographic = patient. \
-            withColumnRenamed('crd', 'startdate').withColumnRenamed('tod', 'enddate')
+        demographic = patient.withColumnRenamed("crd", "startdate").withColumnRenamed(
+            "tod", "enddate"
+        )
 
     return demographic
 
 
 def retrieve_link_eligible(dir, spark):
-    eligible = read_txt(spark.sc, spark.sqlContext, dir).where(F.col('hes_e') == 1)
+    eligible = read_txt(spark.sc, spark.sqlContext, dir).where(F.col("hes_e") == 1)
     return eligible
 
 
@@ -151,15 +208,18 @@ def retrieve_death(dir, spark):
     """
 
     death = read_txt(spark.sc, spark.sqlContext, path=dir)
-    death = death.withColumn('dod', cvt_str2time(death, 'dod', year_first=False))
-    death = death.withColumn('goodstart', F.to_date(F.lit(DICT2KEEP['ons_death'][0])  , 'dd/MM/yyyy')  ) \
-        .withColumn('goodend', F.to_date(F.lit(DICT2KEEP['ons_death'][1]), 'dd/MM/yyyy'))
+    death = death.withColumn("dod", cvt_str2time(death, "dod", year_first=False))
+    death = death.withColumn(
+        "goodstart", F.to_date(F.lit(DICT2KEEP["ons_death"][0]), "dd/MM/yyyy")
+    ).withColumn("goodend", F.to_date(F.lit(DICT2KEEP["ons_death"][1]), "dd/MM/yyyy"))
 
-    death = death.filter(F.col('dod') >= F.col('goodstart') ).filter(F.col('dod')  < F.col('goodend') )
-    return death.drop('goodend').drop('goodstart')
+    death = death.filter(F.col("dod") >= F.col("goodstart")).filter(
+        F.col("dod") < F.col("goodend")
+    )
+    return death.drop("goodend").drop("goodstart")
 
 
-def retrieve_bnf_prod_crossmapLEGACY(dir, spark, cut4= True):
+def retrieve_bnf_prod_crossmapLEGACY(dir, spark, cut4=True):
     """
     get cross map for bnf mapping
 
@@ -169,13 +229,21 @@ def retrieve_bnf_prod_crossmapLEGACY(dir, spark, cut4= True):
     """
 
     if cut4:
-        extract_bnf = F.udf(lambda x: '/'.join([each[0:4] for each in x.split('/')]) if '/' in x else x[0:4])
+        extract_bnf = F.udf(
+            lambda x: "/".join([each[0:4] for each in x.split("/")])
+            if "/" in x
+            else x[0:4]
+        )
 
     else:
-        extract_bnf = F.udf(lambda x:x)
+        extract_bnf = F.udf(lambda x: x)
 
-    crossmap = read_txt(spark.sc, spark.sqlContext, path=dir).select('prodcode', 'bnfcode')\
-        .where((F.col("bnfcode") != '00000000')).withColumn('code', extract_bnf('bnfcode'))
+    crossmap = (
+        read_txt(spark.sc, spark.sqlContext, path=dir)
+        .select("prodcode", "bnfcode")
+        .where(F.col("bnfcode") != "00000000")
+        .withColumn("code", extract_bnf("bnfcode"))
+    )
 
     return crossmap
 
@@ -189,13 +257,19 @@ def retrieve_bnf_prod_crossmap(dir, spark):
     :return: crossmap dataframe
     """
 
-    extract_bnf = F.udf(lambda x:x.replace(' ', '').strip())
+    extract_bnf = F.udf(lambda x: x.replace(" ", "").strip())
 
-    crossmap = read_txt(spark.sc, spark.sqlContext, path=dir).select('ProdCodeId', 'BNFChapter').withColumnRenamed('ProdCodeId','prodcode') .withColumnRenamed('BNFChapter','bnfcode') \
-        .where((F.col("bnfcode") != '00000000')).where((F.col("bnfcode") != '')).withColumn('code', extract_bnf('bnfcode'))
+    crossmap = (
+        read_txt(spark.sc, spark.sqlContext, path=dir)
+        .select("ProdCodeId", "BNFChapter")
+        .withColumnRenamed("ProdCodeId", "prodcode")
+        .withColumnRenamed("BNFChapter", "bnfcode")
+        .where(F.col("bnfcode") != "00000000")
+        .where(F.col("bnfcode") != "")
+        .withColumn("code", extract_bnf("bnfcode"))
+    )
 
     return crossmap
-
 
 
 def retrieve_bnfvtm_prod_crossmap(dir, spark):
@@ -207,12 +281,20 @@ def retrieve_bnfvtm_prod_crossmap(dir, spark):
     :return: crossmap dataframe
     """
 
-    extract_bnf = F.udf(lambda x:x.replace(' ', '').strip())
+    extract_bnf = F.udf(lambda x: x.replace(" ", "").strip())
 
-    crossmap = read_parquet(spark.sqlContext, dir).select('ProdCodeId', 'target').withColumnRenamed('ProdCodeId','prodcode') .withColumnRenamed('target','bnfvtmcode') \
-        .where((F.col("bnfvtmcode") != '00000000')).where((F.col("bnfvtmcode") != '')).withColumn('code', extract_bnf('bnfvtmcode'))
+    crossmap = (
+        read_parquet(spark.sqlContext, dir)
+        .select("ProdCodeId", "target")
+        .withColumnRenamed("ProdCodeId", "prodcode")
+        .withColumnRenamed("target", "bnfvtmcode")
+        .where(F.col("bnfvtmcode") != "00000000")
+        .where(F.col("bnfvtmcode") != "")
+        .withColumn("code", extract_bnf("bnfvtmcode"))
+    )
 
     return crossmap
+
 
 def retrieve_med2read_map(dir, spark):
     """
@@ -222,12 +304,18 @@ def retrieve_med2read_map(dir, spark):
     :return: dataframe [ 'medcode',  'readcode']
     """
 
-    med2read = read_txt(spark.sc, spark.sqlContext, dir).withColumnRenamed('MedCodeId', 'medcode').withColumnRenamed('CleansedReadCode', 'readcode') \
-        .withColumn('medcode', F.col('medcode').cast('string')).select(['medcode', 'readcode'])
+    med2read = (
+        read_txt(spark.sc, spark.sqlContext, dir)
+        .withColumnRenamed("MedCodeId", "medcode")
+        .withColumnRenamed("CleansedReadCode", "readcode")
+        .withColumn("medcode", F.col("medcode").cast("string"))
+        .select(["medcode", "readcode"])
+    )
 
-    med2read = med2read.filter(F.col('readcode')!='')
+    med2read = med2read.filter(F.col("readcode") != "")
 
     return med2read
+
 
 def retrieve_med2sno_map(dir, spark):
     """
@@ -237,12 +325,18 @@ def retrieve_med2sno_map(dir, spark):
     :return: dataframe [ 'medcode',  'readcode']
     """
 
-    med2sno = read_txt(spark.sc, spark.sqlContext, dir).withColumnRenamed('MedCodeId', 'medcode').withColumnRenamed('SnomedCTConceptId', 'snomed') \
-        .withColumn('medcode', F.col('medcode').cast('string')).select(['medcode', 'snomed'])
+    med2sno = (
+        read_txt(spark.sc, spark.sqlContext, dir)
+        .withColumnRenamed("MedCodeId", "medcode")
+        .withColumnRenamed("SnomedCTConceptId", "snomed")
+        .withColumn("medcode", F.col("medcode").cast("string"))
+        .select(["medcode", "snomed"])
+    )
 
-    med2sno = med2sno.filter(F.col('snomed')!='')
+    med2sno = med2sno.filter(F.col("snomed") != "")
 
     return med2sno
+
 
 def retrieve_read2icd_map(dir, spark):
     """
@@ -252,11 +346,14 @@ def retrieve_read2icd_map(dir, spark):
     :return: ['read', 'ICD']
     """
 
-    read2icd = read_csv(spark.sqlContext, dir) \
-        .select(['read', 'icd']).withColumn('read', F.col('read').cast('string'))
+    read2icd = (
+        read_csv(spark.sqlContext, dir)
+        .select(["read", "icd"])
+        .withColumn("read", F.col("read").cast("string"))
+    )
 
-    rm_x = F.udf(lambda x: x if x[-1] != 'X' else x[0:-1])
-    read2icd = rename_col(read2icd.withColumn('icd', rm_x('icd')), 'icd', 'ICD')
+    rm_x = F.udf(lambda x: x if x[-1] != "X" else x[0:-1])
+    read2icd = rename_col(read2icd.withColumn("icd", rm_x("icd")), "icd", "ICD")
 
     return read2icd
 
@@ -269,25 +366,33 @@ def retrieve_sno2icd_map(dir, spark):
     :return: ['read', 'ICD']
     """
 
-    sno2icd = read_parquet(spark.sqlContext, dir) \
-        .select(['snomed', 'icd10code']).withColumn('snomed', F.col('snomed').cast('string'))
-    sno2icd = sno2icd.withColumnRenamed('icd10code', 'ICD')
+    sno2icd = (
+        read_parquet(spark.sqlContext, dir)
+        .select(["snomed", "icd10code"])
+        .withColumn("snomed", F.col("snomed").cast("string"))
+    )
+    sno2icd = sno2icd.withColumnRenamed("icd10code", "ICD")
 
     return sno2icd
+
+
 def retrieve_additional(dir, spark):
     additional = read_txtzip(spark.sc, spark.sqlContext, dir)
     return additional
 
 
-
 def retrieve_procedure(dir, spark):
-    hes_procedure = read_txtzip(spark.sc, spark.sqlContext, dir).select(['patid', 'OPCS', 'evdate'])
-    hes_procedure = rename_col(hes_procedure, 'evdate', 'eventdate')
-    hes_procedure = hes_procedure.withColumn('eventdate', cvt_str2time(hes_procedure, 'eventdate', year_first=False))
+    hes_procedure = read_txtzip(spark.sc, spark.sqlContext, dir).select(
+        ["patid", "OPCS", "evdate"]
+    )
+    hes_procedure = rename_col(hes_procedure, "evdate", "eventdate")
+    hes_procedure = hes_procedure.withColumn(
+        "eventdate", cvt_str2time(hes_procedure, "eventdate", year_first=False)
+    )
     return hes_procedure
 
 
 def retrieve_lab_test(dir, spark):
-    test = read_txtzip(spark.sc, spark.sqlContext, dir).drop('staffid').drop('sysdate')
-    test = test.withColumn('eventdate', cvt_str2time(test, 'eventdate'))
+    test = read_txtzip(spark.sc, spark.sqlContext, dir).drop("staffid").drop("sysdate")
+    test = test.withColumn("eventdate", cvt_str2time(test, "eventdate"))
     return test

@@ -1,8 +1,17 @@
-from CPRD.base.table import Patient,Practice,Clinical, Diagnosis, Therapy, Hes
-from CPRD.config.spark import read_txt, read_csv, read_txtzip
-import pyspark.sql.functions as F
-from CPRD.config.utils import cvt_str2time
 import os
+
+import pyspark.sql.functions as F
+
+from cprd_antihypertensives.cprd.base.table import (
+    Clinical,
+    Diagnosis,
+    Hes,
+    Patient,
+    Practice,
+    Therapy,
+)
+from cprd_antihypertensives.cprd.config.spark import read_csv, read_txt, read_txtzip
+from cprd_antihypertensives.cprd.config.utils import cvt_str2time
 
 
 def retrieve_eligible_time(demographics, death, return_dod=False):
@@ -16,15 +25,15 @@ def retrieve_eligible_time(demographics, death, return_dod=False):
     :param death: death dataframe
     :return: time reference dataframe with patid, start date, and end date
     """
-    time = demographics.select(['patid', 'startdate', 'enddate'])
-    death = death.select(['patid', 'dod'])
+    time = demographics.select(["patid", "startdate", "enddate"])
+    death = death.select(["patid", "dod"])
 
-    time = time.join(death, 'patid', 'left')
+    time = time.join(death, "patid", "left")
 
-    time = time.withColumn('enddate', F.least('enddate', 'dod'))
+    time = time.withColumn("enddate", F.least("enddate", "dod"))
 
     if return_dod is False:
-        time = time.drop('dod')
+        time = time.drop("dod")
     return time
 
 
@@ -39,7 +48,12 @@ def bnf_mapping(crossmap, therapy):
     :param therapy: therapy dataframe
     :return: mapped therapy dataframe with bnfcode
     """
-    therapy = therapy.drop('bnfcode').join(crossmap, 'prodcode', 'left').dropna().dropDuplicates()
+    therapy = (
+        therapy.drop("bnfcode")
+        .join(crossmap, "prodcode", "left")
+        .dropna()
+        .dropDuplicates()
+    )
     return therapy
 
 
@@ -51,14 +65,19 @@ def med2read_mapping(crossmap, clinical):
     :return: ['patid', 'eventdate', 'medcode', 'source', 'readcode']
     """
 
-    cprd = clinical.join(crossmap, 'medcode', 'left') \
-        .select(['patid', 'eventdate', 'medcode', 'readcode', 'source']) \
-        .withColumn('firstLetter', F.col('readcode').substr(0, 1))
+    cprd = (
+        clinical.join(crossmap, "medcode", "left")
+        .select(["patid", "eventdate", "medcode", "readcode", "source"])
+        .withColumn("firstLetter", F.col("readcode").substr(0, 1))
+    )
 
     # keep all records that belong to diagnoses
     cprd = cprd.filter(
-        F.col('firstLetter').isin(*['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Z', 'U']) == False
-    ).select(['patid', 'eventdate', 'medcode', 'readcode', 'source'])
+        F.col("firstLetter").isin(
+            *["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "Z", "U"]
+        )
+        is False,
+    ).select(["patid", "eventdate", "medcode", "readcode", "source"])
 
     return cprd
 
@@ -71,13 +90,16 @@ def med2sno_mapping(crossmap, clinical):
     :return: ['patid', 'eventdate', 'medcode', 'source', 'snomed']
     """
 
-    cprd = clinical.join(crossmap, 'medcode', 'left') \
-        .select(['patid', 'eventdate', 'medcode', 'snomed', 'source'])
+    cprd = clinical.join(crossmap, "medcode", "left").select(
+        ["patid", "eventdate", "medcode", "snomed", "source"]
+    )
 
     # keep all records that belong to diagnoses
-    cprd = cprd.select(['patid', 'eventdate', 'medcode', 'snomed', 'source'])
+    cprd = cprd.select(["patid", "eventdate", "medcode", "snomed", "source"])
 
     return cprd
+
+
 def read2icd_mapping(crossmap, clinical):
     """
     cross map read code to icd code
@@ -87,12 +109,14 @@ def read2icd_mapping(crossmap, clinical):
     """
 
     # get read code first 5 characters for mapping
-    clinical = clinical.withColumn('read', F.col('readcode').substr(0, 5))
+    clinical = clinical.withColumn("read", F.col("readcode").substr(0, 5))
 
     # join crossmap
-    clinical = clinical.join(crossmap, 'read', 'left').drop('read')
+    clinical = clinical.join(crossmap, "read", "left").drop("read")
 
     return clinical
+
+
 def sno2icd_mapping(crossmap, clinical):
     """
     cross map read code to icd code
@@ -104,9 +128,10 @@ def sno2icd_mapping(crossmap, clinical):
     # get read code first 5 characters for mapping
 
     # join crossmap
-    clinical = clinical.join(crossmap, 'snomed', 'left')
+    clinical = clinical.join(crossmap, "snomed", "left")
 
     return clinical
+
 
 def merge_hes_clinical(hes, clinical):
     """

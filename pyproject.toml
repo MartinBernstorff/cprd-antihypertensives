@@ -19,7 +19,8 @@ classifiers = [
 ]
 requires-python = ">=3.9"
 dependencies = [
-  "pydantic"
+  "pydantic",
+  "pyspark",
 ]
 
 [project.license]
@@ -106,6 +107,8 @@ select = [
   "W"
 ]
 ignore = [
+  "ANN001",
+  "ANN201",
   "ANN101",
   "ANN401",
   "E402",
