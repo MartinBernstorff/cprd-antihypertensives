@@ -54,7 +54,8 @@ class Patient(DataFrame):
         """get pracid from patid inorder to join with practice table"""
         return Patient(
             self.withColumn(
-                "pracid", self["pracid"].cast(pyspark.sql.types.IntegerType()),
+                "pracid",
+                self["pracid"].cast(pyspark.sql.types.IntegerType()),
             ),
         )
 
@@ -121,14 +122,16 @@ class Practice(DataFrame):
         """NOTE: UTS NOT POPULATED IN 2021 CUT -- FOR NOW, SET TO STATIC VALUE!!!"""
         return Practice(
             self.drop("uts").withColumn(
-                "uts", F.to_date(F.lit("10/10/0001"), "dd/mm/yyyy"),
+                "uts",
+                F.to_date(F.lit("10/10/0001"), "dd/mm/yyyy"),
             ),
         )
 
     def intpracid(self):
         return Practice(
             self.withColumn(
-                "pracid", self["pracid"].cast(pyspark.sql.types.IntegerType()),
+                "pracid",
+                self["pracid"].cast(pyspark.sql.types.IntegerType()),
             ),
         )
 
@@ -192,7 +195,8 @@ class Diagnosis(DataFrame):
         """
 
         df = self.withColumn(
-            "goodstart", F.to_date(F.lit(DICT2KEEP["hes_apc"][0]), "dd/MM/yyyy"),
+            "goodstart",
+            F.to_date(F.lit(DICT2KEEP["hes_apc"][0]), "dd/MM/yyyy"),
         ).withColumn("goodend", F.to_date(F.lit(DICT2KEEP["hes_apc"][1]), "dd/MM/yyyy"))
 
         df = df.filter(F.col("admidate") >= F.col("goodstart")).filter(
@@ -293,7 +297,8 @@ class Proc_HES(DataFrame):
         """
 
         df = self.withColumn(
-            "goodstart", F.to_date(F.lit(DICT2KEEP["hes_apc"][0]), "dd/MM/yyyy"),
+            "goodstart",
+            F.to_date(F.lit(DICT2KEEP["hes_apc"][0]), "dd/MM/yyyy"),
         ).withColumn("goodend", F.to_date(F.lit(DICT2KEEP["hes_apc"][1]), "dd/MM/yyyy"))
 
         df = df.filter(F.col("evdate") >= F.col("goodstart")).filter(

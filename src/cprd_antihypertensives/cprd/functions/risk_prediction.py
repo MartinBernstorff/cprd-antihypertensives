@@ -1,4 +1,3 @@
-
 import pyspark.sql.functions as F
 from pyspark.sql import Window
 
@@ -13,18 +12,28 @@ class RiskPredictionBase:
 
     def define_label(self, demographics, source, condition, column, death):
         demographics = self.get_label_from_records(
-            demographics, source=source, condition=condition, column=column,
+            demographics,
+            source=source,
+            condition=condition,
+            column=column,
         )
         label_defined = demographics.filter(F.col("label").isin(*[0, 1]))
         label_unclear = demographics.filter(F.col("label").isin(*[0, 1]) is False)
         label_mark = self.get_label_from_death_registration(
-            label_unclear, death, condition,
+            label_unclear,
+            death,
+            condition,
         )
         demographics = label_defined.union(label_mark)
         return demographics
 
     def exclusion_inclusion_record(
-        self, demographics, criteria, source, column, exclusion=True,
+        self,
+        demographics,
+        criteria,
+        source,
+        column,
+        exclusion=True,
     ):
         """
         this function is to check the if patient should be included or excluded because contains certain
@@ -82,12 +91,14 @@ class RiskPredictionBase:
             F.col("eventdate") <= F.col("endFollowUp"),
         ).withColumn("label", F.lit(1))
         time2eventdiff = F.unix_timestamp("eventdate", "yyyy-MM-dd") - F.unix_timestamp(
-            "study_entry", "yyyy-MM-dd",
+            "study_entry",
+            "yyyy-MM-dd",
         )
         positive = (
             positive.withColumn("time2event", time2eventdiff)
             .withColumn(
-                "time2event", (F.col("time2event") / 3600 / 24 / 30).cast("integer"),
+                "time2event",
+                (F.col("time2event") / 3600 / 24 / 30).cast("integer"),
             )
             .select(["patid", "label", "time2event"])
         )
@@ -265,7 +276,8 @@ class RiskPredictionBase:
                 )
                 demographics_4keep_wSourcePOS = (
                     demographics_4keep_wSourcePOS.withColumn(
-                        column, F.first(column).over(w),
+                        column,
+                        F.first(column).over(w),
                     )
                     .groupBy("patid")
                     .agg(
@@ -295,12 +307,16 @@ class RiskPredictionBase:
                     ["patid"],
                 ).union(demographics_4keep_wSourceNEG.select(["patid"]))
                 demographics_4keep_wSource = demographics_4keep_wSource.join(
-                    demographics_4keep_wSourcePOS, "patid", "left",
+                    demographics_4keep_wSourcePOS,
+                    "patid",
+                    "left",
                 ).drop("study_entry")
 
                 demographics = demographics.join(originalDemo4Backup, "patid", "left")
                 demographics_4keep_wSource = demographics_4keep_wSource.join(
-                    originalDemo4Backup, "patid", "left",
+                    originalDemo4Backup,
+                    "patid",
+                    "left",
                 )
                 # union with larger demographics which was free of potentialyl exlcuded patients
                 demographics_4keep_wSource = demographics_4keep_wSource.select(
@@ -367,13 +383,15 @@ class RiskPredictionBase:
 
         # join death with demographics and calculate time2event
         time2eventdiff = F.unix_timestamp("enddate", "yyyy-MM-dd") - F.unix_timestamp(
-            "study_entry", "yyyy-MM-dd",
+            "study_entry",
+            "yyyy-MM-dd",
         )
         demographics = (
             demographics.join(death, "patid", "left")
             .withColumn("time2event", time2eventdiff)
             .withColumn(
-                "time2event", (F.col("time2event") / 3600 / 24 / 30).cast("integer"),
+                "time2event",
+                (F.col("time2event") / 3600 / 24 / 30).cast("integer"),
             )
         )
         demographics = demographics.filter(F.col("label").isNotNull())
@@ -403,7 +421,9 @@ class RiskPredictionBase:
         if check_death:
             label_unclear = demographics.filter(F.col("label").isNull())
             label_define_death = self.get_label_from_death_registration(
-                demographics=label_unclear, death=death, condition=condition,
+                demographics=label_unclear,
+                death=death,
+                condition=condition,
             )
             demographics = label_defined.union(label_define_death)
         else:

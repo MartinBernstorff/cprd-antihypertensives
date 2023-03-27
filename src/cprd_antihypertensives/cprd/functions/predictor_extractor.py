@@ -130,7 +130,8 @@ class PredictorExtractorBase:
         # separate positive patients and negative patients and set exist = 0 for negative patients
         positive = demographics.filter(F.col("exist").isNotNull())
         negative = demographics.filter(F.col("exist").isNull()).withColumn(
-            "exist", F.lit(0),
+            "exist",
+            F.lit(0),
         )
 
         # join positive and negative group and select only patid and col columns

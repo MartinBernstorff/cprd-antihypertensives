@@ -22,7 +22,9 @@ class Cohort:
 
     def date_least_year_register_gp(self, demographics, death):
         time = merge.retrieve_eligible_time(
-            demographics=demographics, death=death, return_dod=True,
+            demographics=demographics,
+            death=death,
+            return_dod=True,
         )
         time = time.withColumn(
             "least_gp_register_date",
@@ -38,7 +40,8 @@ class Cohort:
     def date_least_age(self, demographics):
         # set dob to be the middle of the year
         demographics = demographics.withColumn(
-            "dob", F.concat(F.col("yob"), F.lit("0701")),
+            "dob",
+            F.concat(F.col("yob"), F.lit("0701")),
         )
         demographics = demographics.withColumn("dob", cvt_str2time(demographics, "dob"))
         demographics = demographics.withColumn(
@@ -50,7 +53,8 @@ class Cohort:
     def date_greatest_age(self, demographics):
         # set dob to be the middle of the year
         demographics = demographics.withColumn(
-            "dob", F.concat(F.col("yob"), F.lit("0701")),
+            "dob",
+            F.concat(F.col("yob"), F.lit("0701")),
         )
         demographics = demographics.withColumn("dob", cvt_str2time(demographics, "dob"))
         demographics = demographics.withColumn(
@@ -102,7 +106,8 @@ class CohortHardCut(Cohort):
         """
         demographics = self.standard_prepare(file, spark)
         demographics = demographics.withColumn(
-            "study_entry", F.to_date(F.lit(study_entry_date)),
+            "study_entry",
+            F.to_date(F.lit(study_entry_date)),
         )
 
         # study entry date after the date of birth
@@ -138,14 +143,17 @@ class CohortSoftCut(Cohort):
         demographics = self.standard_prepare(file, spark)
 
         demographics = demographics.withColumn(
-            "study_entry", F.to_date(F.lit(duration[0])),
+            "study_entry",
+            F.to_date(F.lit(duration[0])),
         )
         # study entry is greatest of three as described above
         demographics = (
             demographics.withColumn(
                 "study_entry_real",
                 F.greatest(
-                    f"{self.least_age}_dob", "least_gp_register_date", "study_entry",
+                    f"{self.least_age}_dob",
+                    "least_gp_register_date",
+                    "study_entry",
                 ),
             )
             .drop("study_entry")
@@ -154,7 +162,8 @@ class CohortSoftCut(Cohort):
 
         # last start of study is the second element of the duration (the finish date)
         demographics = demographics.withColumn(
-            "exit_date", F.to_date(F.lit(duration[1])),
+            "exit_date",
+            F.to_date(F.lit(duration[1])),
         )
 
         demographics.withColumn(

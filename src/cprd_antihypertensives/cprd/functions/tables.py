@@ -186,7 +186,8 @@ def retrieve_demographics(patient, practice, practiceLink=True):
 
     else:
         demographic = patient.withColumnRenamed("crd", "startdate").withColumnRenamed(
-            "tod", "enddate",
+            "tod",
+            "enddate",
         )
 
     return demographic
@@ -209,7 +210,8 @@ def retrieve_death(dir, spark):
     death = read_txt(spark.sc, spark.sqlContext, path=dir)
     death = death.withColumn("dod", cvt_str2time(death, "dod", year_first=False))
     death = death.withColumn(
-        "goodstart", F.to_date(F.lit(DICT2KEEP["ons_death"][0]), "dd/MM/yyyy"),
+        "goodstart",
+        F.to_date(F.lit(DICT2KEEP["ons_death"][0]), "dd/MM/yyyy"),
     ).withColumn("goodend", F.to_date(F.lit(DICT2KEEP["ons_death"][1]), "dd/MM/yyyy"))
 
     death = death.filter(F.col("dod") >= F.col("goodstart")).filter(
@@ -386,7 +388,8 @@ def retrieve_procedure(dir, spark):
     )
     hes_procedure = rename_col(hes_procedure, "evdate", "eventdate")
     hes_procedure = hes_procedure.withColumn(
-        "eventdate", cvt_str2time(hes_procedure, "eventdate", year_first=False),
+        "eventdate",
+        cvt_str2time(hes_procedure, "eventdate", year_first=False),
     )
     return hes_procedure
 

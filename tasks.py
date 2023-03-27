@@ -158,7 +158,7 @@ def pre_commit(c: Context):
             f"{Emo.WARN} Your git working directory is not clean. Do you want to add all and commit now? [y/n]",
         )
         if "y" in add_and_commit.lower():
-            _add_commit(c, msg="style: linting")
+            _add_commit(c)
         else:
             exit(0)
 

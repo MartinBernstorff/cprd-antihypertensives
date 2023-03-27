@@ -1,4 +1,3 @@
-
 import pyspark.sql.functions as F
 from pyspark.sql import Window
 
@@ -89,10 +88,12 @@ class SurvRiskPredictionBase:
 
         # transform time from 'date' to 'months'
         time2eventdiff = F.unix_timestamp("time", "yyyy-MM-dd") - F.unix_timestamp(
-            "study_entry", "yyyy-MM-dd",
+            "study_entry",
+            "yyyy-MM-dd",
         )
         demographics = demographics.withColumn("time", time2eventdiff).withColumn(
-            "time", (F.col("time") / 3600 / 24 / 30).cast("integer"),
+            "time",
+            (F.col("time") / 3600 / 24 / 30).cast("integer"),
         )
         return demographics
 
@@ -126,6 +127,7 @@ class SurvRiskPredictionBase:
             .filter(F.col("cause").isin(*condition))
         )
         death = death.groupBy("patid").agg(
-            F.first("dod").alias("eventdate"), F.first("cause").alias(column),
+            F.first("dod").alias("eventdate"),
+            F.first("cause").alias(column),
         )
         return death

@@ -1,4 +1,3 @@
-
 import pyspark.sql.functions as F
 from pyspark.sql import Window
 
@@ -20,18 +19,28 @@ class PredBase:
         death - the death dataframe
         """
         demographics = self.get_label_from_records(
-            demographics, source=source, condition=condition, column=column,
+            demographics,
+            source=source,
+            condition=condition,
+            column=column,
         )
         label_defined = demographics.filter(F.col("label").isin(*[0, 1]))
         label_unclear = demographics.filter(F.col("label").isin(*[0, 1]) is False)
         label_mark = self.get_label_from_death_registration(
-            label_unclear, death, condition,
+            label_unclear,
+            death,
+            condition,
         )
         demographics = label_defined.union(label_mark)
         return demographics
 
     def exclusion_inclusion_record(
-        self, demographics, criteria, source, column, exclusion=True,
+        self,
+        demographics,
+        criteria,
+        source,
+        column,
+        exclusion=True,
     ):
         """
         this function is to check the if patient should be included or excluded because contains certain
@@ -96,16 +105,19 @@ class PredBase:
             F.col("eventdate") > F.col("enddate"),
         ).withColumn("label", F.lit(0))
         time2eventdiff2 = F.unix_timestamp("enddate", "yyyy-MM-dd") - F.unix_timestamp(
-            "study_entry", "yyyy-MM-dd",
+            "study_entry",
+            "yyyy-MM-dd",
         )
 
         time2eventdiff = F.unix_timestamp("eventdate", "yyyy-MM-dd") - F.unix_timestamp(
-            "study_entry", "yyyy-MM-dd",
+            "study_entry",
+            "yyyy-MM-dd",
         )
         positive = (
             positive.withColumn("time2event", time2eventdiff)
             .withColumn(
-                "time2event", (F.col("time2event") / 3600 / 24 / 30).cast("integer"),
+                "time2event",
+                (F.col("time2event") / 3600 / 24 / 30).cast("integer"),
             )
             .select(["patid", "label", "time2event"])
         )
@@ -123,7 +135,8 @@ class PredBase:
             negtive_1.where(F.col("endFollowUp") > F.col("enddate"))
             .withColumn("time2event", time2eventdiff2)
             .withColumn(
-                "time2event", (F.col("time2event") / 3600 / 24 / 30).cast("integer"),
+                "time2event",
+                (F.col("time2event") / 3600 / 24 / 30).cast("integer"),
             )
             .select(["patid", "label", "time2event"])
         )
@@ -131,7 +144,8 @@ class PredBase:
         moreNEG = (
             moreNEG.withColumn("time2event", time2eventdiff2)
             .withColumn(
-                "time2event", (F.col("time2event") / 3600 / 24 / 30).cast("integer"),
+                "time2event",
+                (F.col("time2event") / 3600 / 24 / 30).cast("integer"),
             )
             .select(["patid", "label", "time2event"])
         )
@@ -307,7 +321,8 @@ class PredBase:
                 )
                 demographics_4keep_wSourcePOS = (
                     demographics_4keep_wSourcePOS.withColumn(
-                        column, F.first(column).over(w),
+                        column,
+                        F.first(column).over(w),
                     )
                     .groupBy("patid")
                     .agg(
@@ -338,12 +353,16 @@ class PredBase:
                     ["patid"],
                 ).union(demographics_4keep_wSourceNEG.select(["patid"]))
                 demographics_4keep_wSource = demographics_4keep_wSource.join(
-                    demographics_4keep_wSourcePOS, "patid", "left",
+                    demographics_4keep_wSourcePOS,
+                    "patid",
+                    "left",
                 ).drop("study_entry")
 
                 demographics = demographics.join(originalDemo4Backup, "patid", "left")
                 demographics_4keep_wSource = demographics_4keep_wSource.join(
-                    originalDemo4Backup, "patid", "left",
+                    originalDemo4Backup,
+                    "patid",
+                    "left",
                 )
                 # union with larger demographics which was free of potentialyl exlcuded patients
                 demographics_4keep_wSource = demographics_4keep_wSource.select(
@@ -440,13 +459,15 @@ class PredBase:
         # join death with demographics and calculate time2event
 
         time2eventdiff = F.unix_timestamp("enddate", "yyyy-MM-dd") - F.unix_timestamp(
-            "study_entry", "yyyy-MM-dd",
+            "study_entry",
+            "yyyy-MM-dd",
         )
         demographics = (
             demographics.join(death, "patid", "left")
             .withColumn("time2event", time2eventdiff)
             .withColumn(
-                "time2event", (F.col("time2event") / 3600 / 24 / 30).cast("integer"),
+                "time2event",
+                (F.col("time2event") / 3600 / 24 / 30).cast("integer"),
             )
         )
         demographicsNULL = demographics.filter(F.col("label").isNull())
@@ -483,13 +504,17 @@ class PredBase:
         if check_death:
             label_unclear = demographics.filter(F.col("label").isNull())
             label_define_death = self.get_label_from_death_registration(
-                demographics=label_unclear, death=death, condition=condition,
+                demographics=label_unclear,
+                death=death,
+                condition=condition,
             )
             demographics = label_defined.union(label_define_death)
         else:
             label_unclear = demographics.filter(F.col("label").isNull())
             label_define_death = self.get_label_from_death_registration(
-                demographics=label_unclear, death=death, condition=["_garbage"],
+                demographics=label_unclear,
+                death=death,
+                condition=["_garbage"],
             )
             demographics = label_defined.union(label_define_death)
 
@@ -519,7 +544,11 @@ class OutcomePrediction(PredBase):
         self.duration = duration
 
     def exclusion_inclusion_diagnosis_medication(
-        self, demographics, source=None, source_col="code", exclusion_source=True,
+        self,
+        demographics,
+        source=None,
+        source_col="code",
+        exclusion_source=True,
     ):
         # exclude patients if having diagnosis the exclusion_diagnosis
         _ = None
@@ -564,7 +593,10 @@ class OutcomePrediction(PredBase):
         """
 
         demographics, _ = self.exclusion_inclusion_diagnosis_medication(
-            demographics, source, column_condition, exclusion_source,
+            demographics,
+            source,
+            column_condition,
+            exclusion_source,
         )
         # set up label for demographics
         demographics = self.set_label(

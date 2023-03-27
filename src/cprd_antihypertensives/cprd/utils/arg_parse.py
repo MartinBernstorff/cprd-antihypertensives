@@ -8,7 +8,9 @@ def arg_paser():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--params", default=None, help="Base set of params to use for experiment",
+        "--params",
+        default=None,
+        help="Base set of params to use for experiment",
     )
 
     parser.add_argument("--save_path", default=None, help="path to save all results")
