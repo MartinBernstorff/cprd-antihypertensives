@@ -154,10 +154,13 @@ def pre_commit(c: Context):
     # Essential to have a clean working directory before pre-commit to avoid committing
     # heterogenous files under a "style: linting" commit
     if is_uncommitted_changes(c):
-        print(
-            f"{Emo.WARN} Your git working directory is not clean. Stash or commit before running pre-commit.",
+        add_and_commit = input(
+            f"{Emo.WARN} Your git working directory is not clean. Do you want to add all and commit now? [y/n]",
         )
-        exit(0)
+        if "y" in add_and_commit.lower():
+            _add_commit(c, msg="style: linting")
+        else:
+            exit(0)
 
     echo_header(f"{Emo.CLEAN} Running pre-commit checks")
     pre_commit_cmd = "pre-commit run --all-files"
