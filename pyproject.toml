@@ -23,10 +23,6 @@ dependencies = [
   "pyspark",
 ]
 
-[project.license]
-file = "LICENSE"
-name = "None"
-
 [project.optional-dependencies]
 dev = [
   "cruft",
