@@ -268,9 +268,6 @@ class CohortSoftCut(CausalCohort):
 
     def extractionExposure(
         self,
-        file,
-        spark,
-        duration,
         demographics,
         sourceT=None,
         sourceCol=None,
