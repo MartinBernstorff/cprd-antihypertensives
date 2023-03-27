@@ -184,7 +184,6 @@ def mypy(c: Context):
 
 @task
 def branch(c: Context):
-    current_user = getpass.getuser()
     new_branch_name = input("🌲 Branching from main. New branch name: ")
     c.run(f"git checkout -b {new_branch_name} main")
 
