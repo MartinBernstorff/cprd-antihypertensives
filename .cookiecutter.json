@@ -1,0 +1,16 @@
+{
+    "_copy_without_render": [
+        "*.github"
+    ],
+    "_template": "https://github.com/MartinBernstorff/swift-python-cookiecutter",
+    "add_makefile": "y",
+    "author": "Martin Bernstorff",
+    "copyright_year": "2023",
+    "email": "martinbernstorff@gmail.com",
+    "friendly_name": "CPRD, T-BEHRT on antihypertensives",
+    "github_user": "MartinBernstorff",
+    "license": "None",
+    "package_name": "cprd_antihypertensives",
+    "project_name": "cprd-antihypertensives",
+    "version": "0.0.0"
+}

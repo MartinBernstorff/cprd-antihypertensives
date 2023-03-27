@@ -1,0 +1,37 @@
+task: medication.main
+pyspark:
+  temp: /home/rnshishir/sparkNewT
+  pyspark_env: /home/rnshishir/anaconda3/envs/pyspark37/bin/python3.7
+file_path:
+  clinical: /home/workspace/datasets/cprd/cprd2021/*/*_Observation_*
+  patient: /home/workspace/datasets/cprd/cprd2021/*/*_Patient_*
+  problem: /home/workspace/datasets/cprd/cprd2021/*/*_Problem_*
+  therapy: /home/workspace/datasets/cprd/cprd2021/*/*_DrugIssue_*
+  practice:  /home/workspace/datasets/cprd/cprd2021/*/*_Practice_*
+  consultation: /home/workspace/datasets/cprd/cprd2021/*/*_Consultation_*
+  staff: /home/workspace/datasets/cprd/cprd2021/*/*_Staff*
+  diagnosis_hes: /home/workspace/datasets/cprd/cprd2021/linkage/20_095_Results/*/Aurum_linked/Final/hes_diagnosis_hosp_20_095_DM.txt
+  proc_hes: /home/workspace/datasets/cprd/cprd2021/linkage/20_095_Results/*/Aurum_linked/Final/hes_procedures_epi_20_095_DM.txt
+  op_hes: /home/workspace/datasets/cprd/cprd2021/linkage/20_095_Results/*/Aurum_linked/Final/hesop_clinical_20_095_DM.txt
+  death: /home/workspace/datasets/cprd/cprd2021/linkage/20_095_Results/*/Aurum_linked/Final/death_patient_20_095_DM.txt
+  eligible: /home/workspace/datasets/cprd/cprd2021/linkage_eligibility_Set21/linkage_eligibility*
+#  diseasemap: /home/workspace/datasets/cprd/cprd2021/202102_lookups/202102_EMISMedicalDictionary.txt
+  med2read: /home/workspace/datasets/cprd/cprd2021/202102_lookups/202102_EMISMedicalDictionary.txt
+  med2sno: /home/workspace/datasets/cprd/cprd2021/202102_lookups/202102_EMISMedicalDictionary.txt
+  medicalDict: /home/shared/shishir/AurumOut/Dicts/MedicalDictionary/CompiledDict/
+  uptodateDict: /home/workspace/datasets/cprd/cprd2021/linkage/20_095_Results/Documentation/*/linkage_coverage_dictv.pkl
+  prod2bnf: /home/workspace/datasets/cprd/cprd2021/202102_lookups/202102_EMISProductDictionary.txt
+  prod2bnf_vtm: /home/shared/shishir/AurumOut/Dicts/meds_medcount_full.parquet
+  read2icd:  /home/workspace/datasets/cprd/cuts/02_cprd2015/3_Lookups/final_mapping.csv
+  sno2icd:  /home/shared/shishir/AurumOut/Dicts/snomed2icd.parquet
+  imd: /home/workspace/datasets/cprd/cprd2021/linkage/20_095_Results/*/Aurum_linked/Final/patient_imd2015_20_095.txt
+  PhenoMaps: /home/shared/shishir/AurumOut/Dicts/compiled_MD_30Jan2023
+
+params:
+  bnf_mapping: true
+  time_range: [1985, 2022]
+save_file: medication.parquet
+
+
+
+
