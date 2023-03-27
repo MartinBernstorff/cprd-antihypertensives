@@ -5,7 +5,7 @@ from pyspark.sql.dataframe import DataFrame
 # def rename_col(df, old, new):
 #     """rename pyspark dataframe column"""
 #     return df.withColumnRenamed(old, new)
-from cprd_antihypertensives.cprd.utils.utils import *
+from cprd_antihypertensives.cprd.utils.utils import load_obj, save_obj, create_folder
 
 from cprd_antihypertensives.cprd.config.utils import cvt_datestr2time
 
