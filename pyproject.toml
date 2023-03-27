@@ -20,7 +20,7 @@ classifiers = [
 requires-python = ">=3.9"
 dependencies = [
   "pydantic",
-  "pyspark",
+  "pyspark==2.4.0",
   "numpy",
   "ipykernel",
   "pandas",
