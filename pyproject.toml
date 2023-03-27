@@ -23,6 +23,7 @@ dependencies = [
   "pyspark==2.4.0",
   "pandas",
   "numpy",
+  "ipykernel",
 ]
 
 [project.optional-dependencies]
