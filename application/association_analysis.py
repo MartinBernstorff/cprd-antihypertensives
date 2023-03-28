@@ -8,6 +8,9 @@
 import os
 import sys
 
+from cprd_antihypertensives.code_extractors.get_antihypertensive_product_codes import (
+    get_codes,
+)
 from cprd_antihypertensives.cprd.config.spark import read_parquet, spark_init
 from cprd_antihypertensives.cprd.functions import tables
 from cprd_antihypertensives.cprd.functions.cohort_select_causal import CohortSoftCut
@@ -19,12 +22,10 @@ from cprd_antihypertensives.globals import COHORTS, PROJECT_ROOT
 from cprd_antihypertensives.utils.load_config import load_config
 
 sys.path.insert(0, "/home/mbernstorff/cprd-antihypertensives")
-os.environ["JAVA_HOME"] = "/home/mbernstorff/miniconda3/envs/antihypertensives-39/"
 
-config = load_config(config_path=PROJECT_ROOT / "application" / "config" / "config.yaml")
-
-# %%
-spark_instance = spark_init(config["pyspark"])
+config = load_config(
+    config_path=PROJECT_ROOT / "application" / "config" / "config.yaml"
+)
 
 # %%
 file_paths = config["file_path"]
@@ -41,19 +42,16 @@ cprd_params = config["params"]
 
 # %%
 # medical dict can give us both exposures and outcomes codes - e.g. diabetes as outcomes or antihyyp as exposurea
-md = MedicalDictionaryRiskPrediction(file_paths)
-antihypertensive_terms = md.findItem("antihy")
-antihypertensive_product_codes = md.queryMedication(antihypertensive_terms, merge=True)[ # type: ignore
-    "merged"
-]
-expcodes = {"prodcode": antihypertensive_product_codes}
+medical_dict = MedicalDictionaryRiskPrediction(file_paths)
+
+expcodes = get_codes(term="antihy", output_type="medication", merge=True)
+bp_measurements = get_codes(term="sbp", output_type="measurement", merge=True)
 
 
 # Exposure selection
 
 # %%
-# CohortSoftCut from the causal cohort selection package has everything to select cohort and baseline
-# specifically the baseline for those WITH the exposure is date of exposure, and for those WITHOUT exp of interest is random sampling of baseline
+
 cohortSelector = CohortSoftCut(
     least_year_register_gp=1,
     least_age=60,
@@ -69,6 +67,10 @@ cohortSelector = CohortSoftCut(
 # no mapping as you don't want to drop the prodcodes which are not mapped...
 # medications = retrieve_medications(file, spark, mapping='none', duration=(2009, 2010), demographics=cohort, practiceLink=True) # noqa: ERA001
 # medications.write.parquet('/home/shared/shishir/AurumOut/rawDat/meds_nomapping_2009_2010_association_example.parquet') # noqa: ERA001
+
+# %%
+os.environ["JAVA_HOME"] = "/home/mbernstorff/miniconda3/envs/antihypertensives-39/"
+spark_instance = spark_init(config["pyspark"])
 
 medications = read_parquet(
     spark_instance.sqlContext,
@@ -132,7 +134,9 @@ cohort = cohort.select(necessaryColumns)
 
 # %%
 # label codes phenotyping from medical dict - ie maybe ischaemic conditions
-labelcodes = md.queryDisease(md.findItem("ischaem"), merge=True)["merged"]
+labelcodes = medical_dict.queryDisease(medical_dict.findItem("ischaem"), merge=True)[
+    "merged"
+]
 allIschaemiaCodes = labelcodes["medcode"] + labelcodes["ICD10"] + labelcodes["OPCS"]
 
 
@@ -204,4 +208,3 @@ risk_cohort.write.parquet(str(COHORTS / "test.parquet"))
 risk_cohort.toPandas().to_parquet(str(COHORTS / "test_pandas.parquet"))
 
 # %%
-
