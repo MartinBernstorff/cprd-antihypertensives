@@ -15,29 +15,16 @@ from cprd_antihypertensives.cprd.functions.MedicalDictionary import (
     MedicalDictionaryRiskPrediction,
 )
 from cprd_antihypertensives.cprd.functions.Prediction import OutcomePrediction
-from cprd_antihypertensives.cprd.utils.yaml_act import yaml_load
 from cprd_antihypertensives.globals import COHORTS, PROJECT_ROOT
+from cprd_antihypertensives.utils.load_config import load_config
 
 sys.path.insert(0, "/home/mbernstorff/cprd-antihypertensives")
 os.environ["JAVA_HOME"] = "/home/mbernstorff/miniconda3/envs/antihypertensives-39/"
 
-
-class dotdict(dict):
-    """dot.notation access to dictionary attributes"""
-
-    __getattr__ = dict.get
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
-
-
-config = yaml_load(
-    dotdict({"params": PROJECT_ROOT / "application" / "config" / "config.yaml"}).params,  # type: ignore
-)
+config = load_config(config_path=PROJECT_ROOT / "application" / "config" / "config.yaml")
 
 # %%
-config["pyspark"]["pyspark_env"]
-pyspark_config = config["pyspark"]
-spark_instance = spark_init(pyspark_config)
+spark_instance = spark_init(config["pyspark"])
 
 # %%
 file_paths = config["file_path"]
@@ -217,3 +204,4 @@ risk_cohort.write.parquet(str(COHORTS / "test.parquet"))
 risk_cohort.toPandas().to_parquet(str(COHORTS / "test_pandas.parquet"))
 
 # %%
+
