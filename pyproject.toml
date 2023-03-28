@@ -20,7 +20,7 @@ classifiers = [
 requires-python = ">=3.7"
 dependencies = [
   "pydantic",
-  "pyspark==2.4.0",
+  "pyspark==3.3.2",
   "pandas",
   "numpy",
   "pyarrow",
@@ -171,6 +171,3 @@ build_command = "python -m pip install build; python -m build"
 
 [tool.setuptools]
 include-package-data = true
-
-[tool.pyright]
-pythonVersion = "3.9"
