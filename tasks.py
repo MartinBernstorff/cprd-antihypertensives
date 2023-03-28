@@ -1,7 +1,7 @@
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from attr import dataclass
 from invoke import Context, Result, task
 
 
@@ -34,22 +34,15 @@ def git_init(c: Context):
         print(f"{Emo.GOOD} Git repository already initialized")
 
 
-def setup_venv(
+def check_conda(
     c: Context,
-    python_version: str,
 ):
-    venv_name = f'.venv{python_version.replace(".", "")}'
-
-    if not Path(venv_name).exists():
-        echo_header(
-            f"{Emo.DO} Creating virtual environment for {Emo.PY}{python_version}",
-        )
-        c.run(f"python{python_version} -m venv {venv_name}")
-        print(f"{Emo.GOOD} Virtual environment created")
+    # Check if in conda environment
+    if "CONDA_PREFIX" in c.run("env", hide=True).stdout:
+        print(f"{Emo.GOOD} In conda environment")
     else:
-        print(f"{Emo.GOOD} Virtual environment already exists")
-
-    c.run(f"source {venv_name}/bin/activate")
+        print(f"{Emo.FAIL} Not in conda environment. Exiting.")
+        exit(1)
 
 
 def _add_commit(c: Context, msg: Optional[str] = None):
@@ -120,7 +113,7 @@ def update_branch(c: Context):
 
 def create_pr(c: Context):
     c.run(
-        "gh pr create --web",
+        "gh/usr/bin/gh pr create --web",
         pty=True,
     )
 
@@ -130,7 +123,7 @@ def update_pr(c: Context):
     # Get current branch name
     branch_name = Path(".git/HEAD").read_text().split("/")[-1].strip()
     pr_result: Result = c.run(
-        "gh pr list --state OPEN",
+        "gh/usr/bin/gh pr list --state OPEN",
         pty=False,
         hide=True,
     )
@@ -140,7 +133,7 @@ def update_pr(c: Context):
     else:
         open_web = input("Open in browser? [y/n] ")
         if "y" in open_web.lower():
-            c.run("gh pr view --web", pty=True)
+            c.run("gh/usr/bin/gh pr view --web", pty=True)
 
 
 def exit_if_error_in_stdout(result: Result):
@@ -182,15 +175,27 @@ def mypy(c: Context):
 
 
 @task
+def branch(c: Context):
+    new_branch_name = input("🌲 Branching from main. New branch name: ")
+    c.run(f"git checkout -b {new_branch_name} main")
+
+
+@task
 def install(c: Context):
+    check_conda(c)
     echo_header(f"{Emo.DO} Installing project")
     c.run("pip install -e '.[dev,tests]'")
 
 
 @task
-def setup(c: Context, python_version: str = "3.9"):
+def setup_java(c: Context):
+    c.run("conda install -c 'bioconda/label/cf201901' java-jdk")
+
+
+@task
+def setup(c: Context):
     git_init(c)
-    setup_venv(c, python_version=python_version)
+    setup_java(c)
     install(c)
 
 

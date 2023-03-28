@@ -1,4 +1,4 @@
-from utils.utils import *
+from cprd_antihypertensives.cprd.utils.utils import load_obj, save_obj, create_folder
 
 from cprd_antihypertensives.cprd.functions.modalities import *
 

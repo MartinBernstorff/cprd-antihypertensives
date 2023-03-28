@@ -142,7 +142,6 @@ class CohortSoftCut(CausalCohort):
         self.practiceLink = practiceLink
 
     def demoExtract(self, file, spark, duration=("1995-01-01", "2010-01-01")):
-
         demographics = self.standard_prepare(
             file,
             spark,
@@ -214,10 +213,7 @@ class CohortSoftCut(CausalCohort):
         demographics = self.demoExtract(file, spark, duration)
 
         demographics = self.extractionExposure(
-            file,
-            spark,
-            duration,
-            demographics,
+            demographics=demographics,
             sourceT=sourceT,
             sourceCol=sourceCol,
             rollingTW=rollingTW,
@@ -273,7 +269,6 @@ class CohortSoftCut(CausalCohort):
         sourceCol=None,
         rollingTW=-1,
     ):
-
         sourceTable = sourceT
         tempcodes = list(self.exposure.values())[0]
         pos, neg = self.get_exp(
@@ -305,7 +300,6 @@ class CohortSoftCut(CausalCohort):
         return demographics
 
     def get_exp(self, demographics, source, condition, column="code", rollingTW=-1):
-
         """
         identify label for patients from the records using the source dataframe and condition list provided
         demographics includes study entry date and when records end

@@ -3,7 +3,7 @@ import yaml
 
 def yaml_load(path):
     with open(path) as ymlfile:
-        cfg = yaml.load(ymlfile)
+        cfg = yaml.full_load(ymlfile)
     return cfg
 
 
