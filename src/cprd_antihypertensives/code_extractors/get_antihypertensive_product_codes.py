@@ -10,7 +10,7 @@ from cprd_antihypertensives.utils.load_config import load_config
 def get_codes(
     term: Union[str, list[str]],
     output_type: Literal["disease", "measurement", "procedure", "medication"],
-    merge: bool = True,
+    merge: bool = False,
 ):
     file_paths = load_config(
         config_path=PROJECT_ROOT / "application" / "config" / "config.yaml"
@@ -32,4 +32,4 @@ def get_codes(
     if output_type == "disease":
         codes = medical_dict.queryDisease(term, merge=merge)
 
-    return codes["merged"] if merge else codes[term[0]]
+    return codes["merged"] if merge else codes[term[0]] # type: ignore

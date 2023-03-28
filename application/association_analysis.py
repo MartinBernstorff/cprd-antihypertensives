@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 # %%
-# Autoreload imports on cell execution
-# %load_ext autoreload
-# %autoreload 2
-
-# %%
 import os
 import sys
 
@@ -18,8 +13,9 @@ from cprd_antihypertensives.cprd.functions.MedicalDictionary import (
     MedicalDictionaryRiskPrediction,
 )
 from cprd_antihypertensives.cprd.functions.Prediction import OutcomePrediction
-from cprd_antihypertensives.globals import COHORTS, PROJECT_ROOT
+from cprd_antihypertensives.globals import PROJECT_ROOT
 from cprd_antihypertensives.utils.load_config import load_config
+from cprd_antihypertensives.utils.save_cohort import save_cohort
 
 sys.path.insert(0, "/home/mbernstorff/cprd-antihypertensives")
 
@@ -31,37 +27,25 @@ config = load_config(
 file_paths = config["file_path"]
 cprd_params = config["params"]
 
-# # Cohort selection
-# ### Effect of antihypertensives on ischaemic conditions
-#
-# - Cohort selection: Age between 60 and 61 years in years between 2009 and 2010
-#
-# - Baseline: First initiation of any antihypertensive
-#
-# - Take random baseline for those without any antihypertensive
 
 # %%
 # medical dict can give us both exposures and outcomes codes - e.g. diabetes as outcomes or antihyyp as exposurea
 medical_dict = MedicalDictionaryRiskPrediction(file_paths)
 
-expcodes = get_codes(term="antihy", output_type="medication", merge=True)
-bp_measurements = get_codes(term="sbp", output_type="measurement", merge=True)
+antihypertensive_codes = get_codes(term="antihy", output_type="medication", merge=True)
+bp_measurements = get_codes(term="sbp", output_type="measurement")
 
 
 # Exposure selection
-
-# %%
-
-cohortSelector = CohortSoftCut(
+cohort_pt_1 = CohortSoftCut(
     least_year_register_gp=1,
     least_age=60,
     greatest_age=61,
-    exposure=expcodes,
+    exposure=antihypertensive_codes,
     imdReq=False,
     linkage=False,
     practiceLink=True,
 )
-
 
 # %%
 # no mapping as you don't want to drop the prodcodes which are not mapped...
@@ -87,9 +71,7 @@ medications = read_parquet(
 #
 
 # %%
-output_path = "/home/mbernstorff/data/cprd-antihypertensives/raw/cohort_association_example.parquet"
-
-cohort = cohortSelector.pipeline(
+cohort_df_1 = cohort_pt_1.pipeline(
     file=file_paths,
     spark=spark_instance,
     duration=("2009-01-01", "2010-01-01"),
@@ -99,27 +81,7 @@ cohort = cohortSelector.pipeline(
     rollingTW=-1,
 )
 
-cohort.write.parquet(output_path)
-
-
-# %%
-cohort = read_parquet(
-    spark_instance.sqlContext,
-    output_path,
-)
-cohort.count()
-# 259345 pats
-
-
-# outcome selection
-
-# %%
-cohort = read_parquet(
-    spark_instance.sqlContext,
-    output_path,
-)
-
-necessaryColumns = [
+column_names = [
     "patid",
     "gender",
     "dob",
@@ -129,71 +91,57 @@ necessaryColumns = [
     "exp_label",
 ]
 
-cohort = cohort.select(necessaryColumns)
+cohort_df_1 = cohort_df_1.select(column_names)
 
 
 # %%
 # label codes phenotyping from medical dict - ie maybe ischaemic conditions
-labelcodes = medical_dict.queryDisease(medical_dict.findItem("ischaem"), merge=True)[
-    "merged"
-]
-allIschaemiaCodes = labelcodes["medcode"] + labelcodes["ICD10"] + labelcodes["OPCS"]
+ischaemic_codes = get_codes(term="ischaem", output_type="disease", merge=True)
+
+ischaemic_codes_combined = (
+    ischaemic_codes["medcode"] + ischaemic_codes["ICD10"] + ischaemic_codes["OPCS"]
+)
 
 
 # %%
 # split diags into icd and nonicd(medcode) and re-union as "code"
-allDiag = read_parquet(
+all_diag_timestamps = read_parquet(
     spark_instance.sqlContext,
     "/home/shared/shishir/AurumOut/rawDat/diagGP_med2sno2icd_HESAPC_praclinkage_1985_2021.parquet",
 )
-GPdiags = allDiag[allDiag.source == "CPRD"]
-GPdiags = GPdiags.select(["patid", "eventdate", "medcode"]).withColumnRenamed(
+gp_diag_timestamps = all_diag_timestamps[all_diag_timestamps.source == "CPRD"]
+gp_diag_timestamps = gp_diag_timestamps.select(
+    ["patid", "eventdate", "medcode"]
+).withColumnRenamed(
     "medcode",
     "code",
 )
-HESdiags = allDiag[allDiag.source == "HES"]
-HESdiags = HESdiags.select(["patid", "eventdate", "ICD"]).withColumnRenamed(
+hes_diag_timestamps = all_diag_timestamps[all_diag_timestamps.source == "HES"]
+hes_diag_timestamps = hes_diag_timestamps.select(
+    ["patid", "eventdate", "ICD"]
+).withColumnRenamed(
     "ICD",
     "code",
 )
-allDiag = GPdiags.union(HESdiags)
+combined_diag_timestamps = gp_diag_timestamps.union(hes_diag_timestamps)
 
 # read death registry as death is an important data source for looking for outcome
 death = tables.retrieve_death(dir=file_paths["death"], spark=spark_instance)
 
 # %%
-# now we use the risk prediction label capture class
-# basically with baseline we can capture 1) outcome, 2) time to outcome
-
-# the exclusion_codes is those we should exclude based on condition - i.e., exclude those with prior cancers
-# the duration is time we should consider the records in the outcome space (maybe from 2008 since earliest baseline is 2009 and end is 2020)
-# the follow_up_duration_month is number of months for the followup
-# the time_to_event_mark_default is mark as -1 if no event and lasts till end of follow-up
-# more information in package
+diabetes_codes = get_codes(term="diabetes", output_type="disease")
 risk_pred_generator = OutcomePrediction(
-    label_condition=allIschaemiaCodes,
-    exclusion_codes=None,
+    label_condition=ischaemic_codes_combined,
+    exclusion_codes=diabetes_codes,
     duration=(2008, 2020),
     follow_up_duration_month=24,
     time_to_event_mark_default=-1,
 )
 
-
 # %%
-# demographics is the cohort file with sutdy entry etc
-# source is the diag table
-# source_col is column that has the diags
-# exclusion_source is True if we want to exclude based on past diags
-
-# check_death is true if we are to check death
-# column_condition is column that has the diags or meds or whatever modality we are wanting to look for label
-# %%
-# prevalent_conditions is if incidence is false, then what are some prevalent conditions we are allowing to look for (a subset of the labels)
-# more information in package
-
 risk_cohort = risk_pred_generator.pipeline(
-    demographics=cohort,
-    source=allDiag,
+    demographics=cohort_df_1,
+    source=combined_diag_timestamps,
     exclusion_source=False,
     check_death=True,
     death=death,
@@ -202,9 +150,8 @@ risk_cohort = risk_pred_generator.pipeline(
     prevalent_conditions=None,
 )
 
-
-risk_cohort.write.parquet(str(COHORTS / "test.parquet"))
-
-risk_cohort.toPandas().to_parquet(str(COHORTS / "test_pandas.parquet"))
+# %%
+save_cohort(risk_cohort, output_type="spark")
+save_cohort(risk_cohort, output_type="pandas")
 
 # %%
