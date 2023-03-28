@@ -113,7 +113,7 @@ def update_branch(c: Context):
 
 def create_pr(c: Context):
     c.run(
-        "gh pr create --web",
+        "gh/usr/bin/gh pr create --web",
         pty=True,
     )
 
@@ -123,7 +123,7 @@ def update_pr(c: Context):
     # Get current branch name
     branch_name = Path(".git/HEAD").read_text().split("/")[-1].strip()
     pr_result: Result = c.run(
-        "gh pr list --state OPEN",
+        "gh/usr/bin/gh pr list --state OPEN",
         pty=False,
         hide=True,
     )
@@ -133,7 +133,7 @@ def update_pr(c: Context):
     else:
         open_web = input("Open in browser? [y/n] ")
         if "y" in open_web.lower():
-            c.run("gh pr view --web", pty=True)
+            c.run("gh/usr/bin/gh pr view --web", pty=True)
 
 
 def exit_if_error_in_stdout(result: Result):
