@@ -1,4 +1,3 @@
-
 import pandas as pd
 from cprd_antihypertensives.globals import COHORTS
 
