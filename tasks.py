@@ -67,7 +67,7 @@ def is_uncommitted_changes(c: Context) -> bool:
     return uncommitted_changes
 
 
-def add_and_commit(c: Context, msg: Optional[str] = None):
+def add_and_commit(c: Context, msg: Optional[str] = None, prompt: bool = True):
     """Add and commit all changes."""
     if is_uncommitted_changes(c):
         uncommitted_changes_descr = c.run(
@@ -80,7 +80,8 @@ def add_and_commit(c: Context, msg: Optional[str] = None):
             f"{Emo.WARN} Uncommitted changes detected",
         )
 
-        input("Press enter to add and commit the changes...")
+        if prompt:
+            input("Press enter to add and commit the changes...")
 
         for line in uncommitted_changes_descr.splitlines():
             print(f"    {line.strip()}")
@@ -174,8 +175,8 @@ def mypy(c: Context):
     c.run("mypy .", pty=True)
     
 @task
-def commit(c: Context):
-    add_and_commit(c)
+def commit(c: Context, prompt: bool = False):
+    add_and_commit(c, prompt=prompt)
 
 @task
 def branch(c: Context):
