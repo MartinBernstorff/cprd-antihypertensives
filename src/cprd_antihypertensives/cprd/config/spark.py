@@ -1,10 +1,10 @@
 import io
 import os
+import sys
 import zipfile
 
 import pyspark
 from pyspark.sql import SQLContext
-
 
 class spark_init:
     def __init__(self, params, name="ehr"):
@@ -17,7 +17,7 @@ class spark_init:
         pyspark_env,
         temp,
         memory="300g",
-        excutors="4",
+        executors="4",
         exe_mem="50g",
         result_size="80g",
         offHeap="16g",
@@ -32,14 +32,14 @@ class spark_init:
 
 
         """
-
-        os.environ["PYSPARK_PYTHON"] = pyspark_env
+        # Set pyspark env to currently running python
+        os.environ["PYSPARK_PYTHON"] = sys.executable
 
         pyspark_submit_args = (
             " --driver-memory "
             + memory
             + " --num-executors "
-            + excutors
+            + executors
             + " --executor-memory "
             + exe_mem
             + " --conf spark.driver.maxResultSize={} --conf spark.memory.offHeap.size={} "

@@ -20,6 +20,8 @@ from cprd_antihypertensives.globals import COHORTS, PROJECT_ROOT
 
 sys.path.insert(0, "/home/mbernstorff/cprd-antihypertensives")
 os.environ["JAVA_HOME"] = "/home/mbernstorff/miniconda3/envs/antihypertensives-39/"
+os.environ["PYSPARK_PYTHON"] = "/home/mbernstorff/miniconda3/envs/antihypertensives-39/bin/python"
+os.environ["PYSPARK_DRIVER_PYTHON"] = "/home/mbernstorff/miniconda3/envs/antihypertensives-39/bin/python"
 
 
 class dotdict(dict):
