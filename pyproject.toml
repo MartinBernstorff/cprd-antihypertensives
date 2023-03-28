@@ -171,3 +171,6 @@ build_command = "python -m pip install build; python -m build"
 
 [tool.setuptools]
 include-package-data = true
+
+[tool.pyright]
+pythonVersion = "3.9"
