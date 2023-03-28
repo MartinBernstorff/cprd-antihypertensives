@@ -18,7 +18,7 @@ class MedicalDictionaryBase:
     """
 
     #
-    def __init__(self, file, spark):
+    def __init__(self, file):
         """
         load dict
         """
@@ -113,13 +113,13 @@ class MedicalDictionaryBase:
 
 
 class MedicalDictionaryRiskPrediction(MedicalDictionaryBase):
-    def __init__(self, file, spark):
-        super().__init__(file, spark)
+    def __init__(self, file):
+        super().__init__(file)
 
     """
     Use:
 
-    medD = MedicalDictionary(file, spark)
+    medD = MedicalDictionary(file)
     print(medD.showDiseases())
     # print the diseases available to select from....
 
@@ -179,7 +179,6 @@ class MedicalDictionaryRiskPrediction(MedicalDictionaryBase):
             return queryOut
 
     def queryMedication(self, queryItem=None, merge=False):
-
         queryOut = getFromDict(self.medDict, queryItem)
 
         if queryOut is None:

@@ -19,7 +19,7 @@ from cprd_antihypertensives.cprd.utils.yaml_act import yaml_load
 from cprd_antihypertensives.globals import COHORTS, PROJECT_ROOT
 
 sys.path.insert(0, "/home/mbernstorff/cprd-antihypertensives")
-os.environ["JAVA_HOME"] = "/home/mbernstorff/miniconda3/envs/antihypertensives/"
+os.environ["JAVA_HOME"] = "/home/mbernstorff/miniconda3/envs/antihypertensives-39/"
 
 
 class dotdict(dict):
@@ -54,10 +54,8 @@ current_params = config["params"]
 # - Take random baseline for those without any antihypertensive
 
 # %%
-
-
 # medical dict can give us both exposures and outcomes codes - e.g. diabetes as outcomes or antihyyp as exposurea
-md = MedicalDictionaryRiskPrediction(file_paths, spark_instance)
+md = MedicalDictionaryRiskPrediction(file_paths)
 antihypertensive_product_codes = md.queryMedication(md.findItem("antihy"), merge=True)[
     "merged"
 ]

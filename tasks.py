@@ -192,7 +192,7 @@ def install(c: Context):
 
 @task
 def setup_java(c: Context):
-    c.run("conda install -c 'bioconda/label/cf201901' java-jdk")
+    c.run("conda install -y -c 'bioconda/label/cf201901' java-jdk")
 
 
 @task
