@@ -2,7 +2,6 @@ import _pickle as pickle
 import numpy as np
 import pyspark.sql.functions as F
 from pyspark.sql.functions import udf
-from pyspark.sql.types import *
 
 
 def rename_col(df, old, new):
