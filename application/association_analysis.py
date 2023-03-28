@@ -7,7 +7,6 @@
 # %%
 import os
 import sys
-from pathlib import Path
 
 from cprd_antihypertensives.cprd.config.spark import read_parquet, spark_init
 from cprd_antihypertensives.cprd.functions import tables
@@ -17,10 +16,11 @@ from cprd_antihypertensives.cprd.functions.MedicalDictionary import (
 )
 from cprd_antihypertensives.cprd.functions.Prediction import OutcomePrediction
 from cprd_antihypertensives.cprd.utils.yaml_act import yaml_load
-from cprd_antihypertensives.globals import PROJECT_ROOT
+from cprd_antihypertensives.globals import COHORTS, PROJECT_ROOT
 
 sys.path.insert(0, "/home/mbernstorff/cprd-antihypertensives")
 os.environ["JAVA_HOME"] = "/home/mbernstorff/miniconda3/envs/antihypertensives/"
+
 
 class dotdict(dict):
     """dot.notation access to dictionary attributes"""
@@ -29,24 +29,28 @@ class dotdict(dict):
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
 
+
 config = yaml_load(
-    dotdict({"params": PROJECT_ROOT / "application" / "config" / "config.yaml"}).params # type: ignore
+    dotdict({"params": PROJECT_ROOT / "application" / "config" / "config.yaml"}).params,  # type: ignore
 )
 
+# %%
 config["pyspark"]["pyspark_env"]
 pyspark_config = config["pyspark"]
 spark_instance = spark_init(pyspark_config)
+
+# %%
 file_paths = config["file_path"]
 current_params = config["params"]
 
 
 # # Cohort selection
 # ### Effect of antihypertensives on ischaemic conditions
-# 
+#
 # - Cohort selection: Age between 60 and 61 years in years between 2009 and 2010
-# 
+#
 # - Baseline: First initiation of any antihypertensive
-# 
+#
 # - Take random baseline for those without any antihypertensive
 
 # %%
@@ -90,10 +94,10 @@ medications = read_parquet(
 
 
 # # pipeline() function has 3 components:
-# 1) Demo extract gets eligible patients between age 60 and 61 ^ defined above and years 2009 and 2010  
-# 2) Extraction of the exposure of interest -  set  baseline as the date of the exposure  
+# 1) Demo extract gets eligible patients between age 60 and 61 ^ defined above and years 2009 and 2010
+# 2) Extraction of the exposure of interest -  set  baseline as the date of the exposure
 # 3) For those without exposure (i.e. control patients), set up baseline as randomised baseline
-# 
+#
 
 # %%
 output_path = "/home/mbernstorff/data/cprd-antihypertensives/raw/cohort_association_example.parquet"
@@ -108,9 +112,7 @@ cohort = cohortSelector.pipeline(
     rollingTW=-1,
 )
 
-cohort.write.parquet(
-    output_path
-)
+cohort.write.parquet(output_path)
 
 
 # %%
@@ -125,11 +127,9 @@ cohort.count()
 # outcome selection
 
 # %%
-
-
 cohort = read_parquet(
     spark_instance.sqlContext,
-    "/home/shared/shishir/AurumOut/rawDat/cohort_association_example.parquet",
+    output_path,
 )
 
 necessaryColumns = [
@@ -146,18 +146,12 @@ cohort = cohort.select(necessaryColumns)
 
 
 # %%
-
-
 # label codes phenotyping from medical dict - ie maybe ischaemic conditions
 labelcodes = md.queryDisease(md.findItem("ischaem"), merge=True)["merged"]
 allIschaemiaCodes = labelcodes["medcode"] + labelcodes["ICD10"] + labelcodes["OPCS"]
 
 
 # %%
-
-
-# label codes phenotyping from medical dict - ie maybe ischaemic conditions
-
 # split diags into icd and nonicd(medcode) and re-union as "code"
 allDiag = read_parquet(
     spark_instance.sqlContext,
@@ -165,27 +159,18 @@ allDiag = read_parquet(
 )
 GPdiags = allDiag[allDiag.source == "CPRD"]
 GPdiags = GPdiags.select(["patid", "eventdate", "medcode"]).withColumnRenamed(
-    "medcode", "code"
+    "medcode", "code",
 )
 HESdiags = allDiag[allDiag.source == "HES"]
 HESdiags = HESdiags.select(["patid", "eventdate", "ICD"]).withColumnRenamed(
-    "ICD", "code"
+    "ICD", "code",
 )
 allDiag = GPdiags.union(HESdiags)
 
 # read death registry as death is an important data source for looking for outcome
 death = tables.retrieve_death(dir=file_paths["death"], spark=spark_instance)
 
-
 # %%
-
-
-
-
-
-# %%
-
-
 # now we use the risk prediction label capture class
 # basically with baseline we can capture 1) outcome, 2) time to outcome
 
@@ -204,8 +189,6 @@ risk_pred_generator = OutcomePrediction(
 
 
 # %%
-
-
 # demographics is the cohort file with sutdy entry etc
 # source is the diag table
 # source_col is column that has the diags
@@ -216,7 +199,6 @@ risk_pred_generator = OutcomePrediction(
 # %%
 # prevalent_conditions is if incidence is false, then what are some prevalent conditions we are allowing to look for (a subset of the labels)
 # more information in package
-
 
 risk_cohort = risk_pred_generator.pipeline(
     demographics=cohort,
@@ -230,4 +212,8 @@ risk_cohort = risk_pred_generator.pipeline(
 )
 
 
-risk_cohort.write.parquet("test.parquet")
+risk_cohort.write.parquet(str(COHORTS / "test.parquet"))
+
+risk_cohort.toPandas().to_parquet(str(COHORTS / "test_pandas.parquet"))
+
+# %%
