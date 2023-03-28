@@ -172,12 +172,15 @@ def pre_commit(c: Context):
 def mypy(c: Context):
     echo_header(f"{Emo.CLEAN} Running mypy")
     c.run("mypy .", pty=True)
-
+    
+@task
+def commit(c: Context):
+    add_and_commit(c)
 
 @task
 def branch(c: Context):
-    new_branch_name = input("🌲 Branching from main. New branch name: ")
-    c.run(f"git checkout -b {new_branch_name} main")
+    new_branch_name = input("🌲 Branching from origin/main. New branch name: ")
+    c.run(f"git checkout -b {new_branch_name} origin/main")
 
 
 @task
