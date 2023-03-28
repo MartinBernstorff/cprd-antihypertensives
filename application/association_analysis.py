@@ -159,11 +159,13 @@ allDiag = read_parquet(
 )
 GPdiags = allDiag[allDiag.source == "CPRD"]
 GPdiags = GPdiags.select(["patid", "eventdate", "medcode"]).withColumnRenamed(
-    "medcode", "code",
+    "medcode",
+    "code",
 )
 HESdiags = allDiag[allDiag.source == "HES"]
 HESdiags = HESdiags.select(["patid", "eventdate", "ICD"]).withColumnRenamed(
-    "ICD", "code",
+    "ICD",
+    "code",
 )
 allDiag = GPdiags.union(HESdiags)
 
