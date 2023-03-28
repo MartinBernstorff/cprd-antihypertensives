@@ -1,7 +1,6 @@
 task: medication.main
 pyspark:
   temp: /home/mbernstorff/sparktemp
-  pyspark_env: /home/mbernstorff/miniconda3/envs/antihypertensives-39/bin/python
 file_path:
   clinical: /home/workspace/datasets/cprd/cprd2021/*/*_Observation_*
   patient: /home/workspace/datasets/cprd/cprd2021/*/*_Patient_*
