@@ -1,3 +1,4 @@
+from typing import Dict, List, Union
 from cprd_antihypertensives.cprd.utils.utils import load_obj, save_obj, create_folder
 
 from cprd_antihypertensives.cprd.functions.modalities import *
@@ -178,7 +179,7 @@ class MedicalDictionaryRiskPrediction(MedicalDictionaryBase):
 
             return queryOut
 
-    def queryMedication(self, queryItem=None, merge=False):
+    def queryMedication(self, queryItem=None, merge=False) -> Union[Dict[str, Dict[str, List[str]]], None]:
         queryOut = getFromDict(self.medDict, queryItem)
 
         if queryOut is None:

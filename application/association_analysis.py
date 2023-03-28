@@ -28,8 +28,7 @@ spark_instance = spark_init(config["pyspark"])
 
 # %%
 file_paths = config["file_path"]
-current_params = config["params"]
-
+cprd_params = config["params"]
 
 # # Cohort selection
 # ### Effect of antihypertensives on ischaemic conditions
@@ -43,7 +42,8 @@ current_params = config["params"]
 # %%
 # medical dict can give us both exposures and outcomes codes - e.g. diabetes as outcomes or antihyyp as exposurea
 md = MedicalDictionaryRiskPrediction(file_paths)
-antihypertensive_product_codes = md.queryMedication(md.findItem("antihy"), merge=True)[
+antihypertensive_terms = md.findItem("antihy")
+antihypertensive_product_codes = md.queryMedication(antihypertensive_terms, merge=True)[ # type: ignore
     "merged"
 ]
 expcodes = {"prodcode": antihypertensive_product_codes}
