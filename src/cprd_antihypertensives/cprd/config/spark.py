@@ -14,7 +14,6 @@ class spark_init:
 
     def _setup_spark(
         self,
-        pyspark_env,
         temp,
         memory="300g",
         executors="4",
@@ -29,10 +28,9 @@ class spark_init:
         Args:
         pyspark_env: pyspark environment, for example '/home/yikuan/anaconda/envs/py3/bin/python3.7'
         temp: dir for saving temporary results for spark, please remember to delete after
-
-
         """
-        # Set pyspark env to currently running python
+        
+        # Set pyspark env to active python interpreter
         os.environ["PYSPARK_PYTHON"] = sys.executable
 
         pyspark_submit_args = (
