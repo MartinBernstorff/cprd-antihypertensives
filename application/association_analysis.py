@@ -82,8 +82,8 @@ cohortSelector = CohortSoftCut(
 
 # %%
 # no mapping as you don't want to drop the prodcodes which are not mapped...
-# medications = retrieve_medications(file, spark, mapping='none', duration=(2009, 2010), demographics=cohort, practiceLink=True)
-# medications.write.parquet('/home/shared/shishir/AurumOut/rawDat/meds_nomapping_2009_2010_association_example.parquet')
+# medications = retrieve_medications(file, spark, mapping='none', duration=(2009, 2010), demographics=cohort, practiceLink=True) # noqa: ERA001
+# medications.write.parquet('/home/shared/shishir/AurumOut/rawDat/meds_nomapping_2009_2010_association_example.parquet') # noqa: ERA001
 
 medications = read_parquet(
     spark_instance.sqlContext,
@@ -93,7 +93,7 @@ medications = read_parquet(
 # medications.select('patid').count() - 11764962 number of records
 
 
-# # pipeline() function has 3 components:
+# # pipeline() function has 3 components:  # noqa: ERA001s
 # 1) Demo extract gets eligible patients between age 60 and 61 ^ defined above and years 2009 and 2010
 # 2) Extraction of the exposure of interest -  set  baseline as the date of the exposure
 # 3) For those without exposure (i.e. control patients), set up baseline as randomised baseline
