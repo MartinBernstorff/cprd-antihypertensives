@@ -5,6 +5,7 @@ import zipfile
 
 import pyspark
 from pyspark.sql import SQLContext
+from pyspark.sql.dataframe import DataFrame as pyspark_df
 
 
 class spark_init:
@@ -90,7 +91,7 @@ def read_txt(sc, sqlContext, path):
     return df
 
 
-def read_parquet(sqlContext, path):
+def read_parquet(sqlContext, path) -> pyspark_df:
     """read from parquet to pyspark dataframe"""
     return sqlContext.read.parquet(path)
 
