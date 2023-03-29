@@ -14,14 +14,13 @@ from cprd_antihypertensives.cprd.functions.MedicalDictionary import (
 )
 from cprd_antihypertensives.cprd.functions.Prediction import OutcomePrediction
 from cprd_antihypertensives.globals import PROJECT_ROOT
-from cprd_antihypertensives.loaders.load_diagnoses import get_all_diagnoses
 from cprd_antihypertensives.utils.load_config import load_config
 from cprd_antihypertensives.utils.save_cohort import save_cohort
 
 sys.path.insert(0, "/home/mbernstorff/cprd-antihypertensives")
 
 config = load_config(
-    config_path=PROJECT_ROOT / "application" / "config" / "config.yaml"
+    config_path=PROJECT_ROOT / "application" / "config" / "config.yaml",
 )
 
 # %%
@@ -103,7 +102,28 @@ ischaemic_codes_combined = (
     ischaemic_codes["medcode"] + ischaemic_codes["ICD10"] + ischaemic_codes["OPCS"]
 )
 
-combined_diag_timestamps = get_all_diagnoses(spark_instance)
+
+# %%
+# split diags into icd and nonicd(medcode) and re-union as "code"
+all_diag_timestamps = read_parquet(
+    spark_instance.sqlContext,
+    "/home/shared/shishir/AurumOut/rawDat/diagGP_med2sno2icd_HESAPC_praclinkage_1985_2021.parquet",
+)
+gp_diag_timestamps = all_diag_timestamps[all_diag_timestamps.source == "CPRD"]
+gp_diag_timestamps = gp_diag_timestamps.select(
+    ["patid", "eventdate", "medcode"],
+).withColumnRenamed(
+    "medcode",
+    "code",
+)
+hes_diag_timestamps = all_diag_timestamps[all_diag_timestamps.source == "HES"]
+hes_diag_timestamps = hes_diag_timestamps.select(
+    ["patid", "eventdate", "ICD"],
+).withColumnRenamed(
+    "ICD",
+    "code",
+)
+combined_diag_timestamps = gp_diag_timestamps.union(hes_diag_timestamps)
 
 # read death registry as death is an important data source for looking for outcome
 death = tables.retrieve_death(dir=file_paths["death"], spark=spark_instance)
@@ -132,8 +152,6 @@ risk_cohort = risk_pred_generator.pipeline(
 
 # %%
 save_cohort(risk_cohort, output_type="spark")
-
-# %%
 save_cohort(risk_cohort, output_type="pandas")
 
 # %%

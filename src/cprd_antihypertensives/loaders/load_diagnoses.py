@@ -2,20 +2,15 @@
 from pathlib import Path
 
 import polars as pl
-from numpy import concatenate
 
 from cprd_antihypertensives.code_extractors.get_antihypertensive_product_codes import (
     get_codes,
-)
-from cprd_antihypertensives.cprd.config.spark import read_parquet
-from cprd_antihypertensives.cprd.functions.MedicalDictionary import (
-    MedicalDictionaryRiskPrediction,
 )
 
 
 def get_all_diagnoses() -> pl.LazyFrame:
     diag_dir = Path(
-        "/home/shared/shishir/AurumOut/rawDat/diagGP_med2sno2icd_HESAPC_praclinkage_1985_2021.parquet/"
+        "/home/shared/shishir/AurumOut/rawDat/diagGP_med2sno2icd_HESAPC_praclinkage_1985_2021.parquet/",
     )
 
     # Get paths for all fiels in directory
@@ -27,8 +22,8 @@ def get_all_diagnoses() -> pl.LazyFrame:
 
 
 def get_diabetes_diagnoses() -> pl.DataFrame:
-    all_diagnoses = get_all_diagnoses()
-    diabetes_codes = get_codes(term="diabetes", output_type="disease")
+    get_all_diagnoses()
+    get_codes(term="diabetes", output_type="disease")
 
     pass
 
