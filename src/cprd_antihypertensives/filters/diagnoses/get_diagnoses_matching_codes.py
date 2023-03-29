@@ -19,13 +19,9 @@ def get_rows_matching_values(
     return output_df
 
 
-def get_rows_matching_codes(df: pl.LazyFrame, codes: Codes) -> pl.LazyFrame:
-    dfs: list[pl.LazyFrame] = []
-
-    for code_source in ["ICD10", "prodcode", "medcode", "OPCS"]:
-        source_df = get_rows_matching_values(
-            df=df, column_name=code_source, values=codes[code_source]
-        )
-        dfs.append(source_df)
-
-    return pl.concat(dfs)
+def get_diagnoses_matching_codes(df: pl.LazyFrame, codes: Codes) -> pl.LazyFrame:
+    icd_10 = get_rows_matching_values(df=df, column_name="ICD", values=codes["ICD10"])
+    medcode = get_rows_matching_values(
+        df=df, column_name="medcode", values=codes["medcode"]
+    )
+    return pl.concat([icd_10, medcode])

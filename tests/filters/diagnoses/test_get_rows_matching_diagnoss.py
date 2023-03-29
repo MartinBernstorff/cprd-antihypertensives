@@ -2,7 +2,7 @@ import pytest
 from cprd_antihypertensives.cprd.utils.test_utils import str_to_df
 from cprd_antihypertensives.filters.diagnoses.get_diagnoses_matching_codes import (
     Codes,
-    get_rows_matching_codes,
+    get_diagnoses_matching_codes,
     get_rows_matching_values,
 )
 from cprd_antihypertensives.loaders.load_diagnoses import get_first_row_by_patient
@@ -42,7 +42,7 @@ def test_get_rows_matching_codes():
         "OPCS": ["1"],
     }
 
-    df = get_rows_matching_codes(df=input_df, codes=codes).collect()
+    df = get_diagnoses_matching_codes(df=input_df, codes=codes).collect()
 
     assert df.shape[0] == 4
     assert df["patid"][0] == "1"
