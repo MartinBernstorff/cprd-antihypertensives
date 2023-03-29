@@ -179,7 +179,9 @@ class MedicalDictionaryRiskPrediction(MedicalDictionaryBase):
 
             return queryOut
 
-    def queryMedication(self, queryItem=None, merge=False) -> Union[Dict[str, Dict[str, List[str]]], None]:
+    def queryMedication(
+        self, queryItem=None, merge=False
+    ) -> Union[Dict[str, Dict[str, List[str]]], None]:
         queryOut = getFromDict(self.medDict, queryItem)
 
         if queryOut is None:

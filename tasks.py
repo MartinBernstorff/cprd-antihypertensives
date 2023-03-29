@@ -173,10 +173,12 @@ def pre_commit(c: Context):
 def mypy(c: Context):
     echo_header(f"{Emo.CLEAN} Running mypy")
     c.run("mypy .", pty=True)
-    
+
+
 @task
 def commit(c: Context, prompt: bool = False):
     add_and_commit(c, prompt=prompt)
+
 
 @task
 def branch(c: Context):
