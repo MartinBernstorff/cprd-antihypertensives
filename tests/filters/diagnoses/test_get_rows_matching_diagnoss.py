@@ -36,7 +36,7 @@ def test_get_rows_matching_codes():
     )
 
     codes: Codes = {
-        "ICD": ["N832"],
+        "ICD10": ["N832"],
         "prodcode": ["1"],
         "medcode": ["1"],
         "OPCS": ["1"],

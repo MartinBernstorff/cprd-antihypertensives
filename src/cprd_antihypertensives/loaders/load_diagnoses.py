@@ -45,12 +45,24 @@ def get_first_row_by_patient(
         pl.col(datetime_column_name).min().over(patient_id_column_name).alias("row_max")
     ).filter(pl.col(datetime_column_name) == pl.col("row_max"))
 
-    without_duplicates = df.unique(
-        subset=[patient_id_column_name, datetime_column_name]
+    first_row = df.groupby(patient_id_column_name).head(1)
+
+    return first_row
+
+
+def get_first_diabetes_diagnosis():
+    all_diabetes = get_diabetes_diagnoses()
+
+    first_diabetes = get_first_row_by_patient(
+        df=all_diabetes,
+        datetime_column_name="eventdate",
+        patient_id_column_name="patid",
     )
 
-    return without_duplicates
+    return first_diabetes
 
 
 if __name__ == "__main__":
-    get_diabetes_diagnoses()
+    df = get_diabetes_diagnoses().collect()
+
+    pass
