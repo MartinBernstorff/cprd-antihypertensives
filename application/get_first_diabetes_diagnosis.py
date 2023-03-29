@@ -6,11 +6,9 @@ from cprd_antihypertensives.code_extractors.get_antihypertensive_product_codes i
 )
 from cprd_antihypertensives.filters.diagnoses.get_diagnoses_matching_codes import (
     get_diagnoses_matching_codes,
-    get_rows_matching_values,
 )
 from cprd_antihypertensives.loaders.load_diagnoses import (
     get_all_diagnoses,
-    get_first_diabetes_diagnosis,
 )
 
 # %%
