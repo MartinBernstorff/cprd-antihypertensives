@@ -1,0 +1,20 @@
+diff a/tasks.py b/tasks.py	(rejected hunks)
+@@ -1,8 +1,8 @@
+ from pathlib import Path
+ from typing import Optional
+ 
+-from attr import dataclass
+ from invoke import Context, Result, task
++from dataclasses import dataclass
+ 
+ 
+ def echo_header(msg: str):
+@@ -85,8 +85,6 @@ def add_and_commit(c: Context, msg: Optional[str] = None):
+             f"{Emo.WARN} Uncommitted changes detected",
+         )
+ 
+-        input("Press enter to add and commit the changes...")
+-
+         for line in uncommitted_changes_descr.splitlines():
+             print(f"    {line.strip()}")
+         print("\n")
