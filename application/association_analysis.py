@@ -105,25 +105,30 @@ ischaemic_codes_combined = (
 
 # %%
 # split diags into icd and nonicd(medcode) and re-union as "code"
-all_diag_timestamps = read_parquet(
-    spark_instance.sqlContext,
-    "/home/shared/shishir/AurumOut/rawDat/diagGP_med2sno2icd_HESAPC_praclinkage_1985_2021.parquet",
-)
-gp_diag_timestamps = all_diag_timestamps[all_diag_timestamps.source == "CPRD"]
-gp_diag_timestamps = gp_diag_timestamps.select(
-    ["patid", "eventdate", "medcode"]
-).withColumnRenamed(
-    "medcode",
-    "code",
-)
-hes_diag_timestamps = all_diag_timestamps[all_diag_timestamps.source == "HES"]
-hes_diag_timestamps = hes_diag_timestamps.select(
-    ["patid", "eventdate", "ICD"]
-).withColumnRenamed(
-    "ICD",
-    "code",
-)
-combined_diag_timestamps = gp_diag_timestamps.union(hes_diag_timestamps)
+def new_func(spark_instance):
+    all_diag_timestamps = read_parquet(
+        spark_instance.sqlContext,
+        "/home/shared/shishir/AurumOut/rawDat/diagGP_med2sno2icd_HESAPC_praclinkage_1985_2021.parquet",
+    )
+    gp_diag_timestamps = all_diag_timestamps[all_diag_timestamps.source == "CPRD"]
+    gp_diag_timestamps = gp_diag_timestamps.select(
+        ["patid", "eventdate", "medcode"]
+    ).withColumnRenamed(
+        "medcode",
+        "code",
+    )
+    hes_diag_timestamps = all_diag_timestamps[all_diag_timestamps.source == "HES"]
+    hes_diag_timestamps = hes_diag_timestamps.select(
+        ["patid", "eventdate", "ICD"]
+    ).withColumnRenamed(
+        "ICD",
+        "code",
+    )
+    combined_diag_timestamps = gp_diag_timestamps.union(hes_diag_timestamps)
+    return combined_diag_timestamps
+
+
+combined_diag_timestamps = new_func(spark_instance)
 
 # read death registry as death is an important data source for looking for outcome
 death = tables.retrieve_death(dir=file_paths["death"], spark=spark_instance)
@@ -152,6 +157,8 @@ risk_cohort = risk_pred_generator.pipeline(
 
 # %%
 save_cohort(risk_cohort, output_type="spark")
+
+# %%
 save_cohort(risk_cohort, output_type="pandas")
 
 # %%

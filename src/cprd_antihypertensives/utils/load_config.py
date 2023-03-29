@@ -8,12 +8,11 @@ def load_config(config_path: Path):
         """dot.notation access to dictionary attributes"""
 
         __getattr__ = dict.get
-        __setattr__ = dict.__setitem__
-        __delattr__ = dict.__delitem__
-
+        __setattr__ = dict.__setitem__  # type: ignore
+        __delattr__ = dict.__delitem__  # type: ignore
 
     config = yaml_load(
-    dotdict({"params": config_path}).params,  # type: ignore
-)
+        dotdict({"params": config_path}).params,  # type: ignore
+    )
 
     return config

@@ -6,7 +6,7 @@ from typing import Literal
 from cprd_antihypertensives.globals import COHORTS
 
 
-def save_cohort(risk_cohort, output_type: Literal["spark", "pandas"] = "spark"):
+def save_cohort(risk_cohort, output_type: Literal["spark", "pandas"] = "spark") -> None:
     now_timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     cohort_dir = Path(COHORTS / now_timestamp)
     cohort_dir.mkdir(parents=True, exist_ok=True)
