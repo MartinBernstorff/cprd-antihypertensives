@@ -11,6 +11,9 @@ from cprd_antihypertensives.cprd.config.spark import read_parquet
 from cprd_antihypertensives.cprd.functions.MedicalDictionary import (
     MedicalDictionaryRiskPrediction,
 )
+from cprd_antihypertensives.filters.diagnoses.get_diagnoses_matching_codes import (
+    get_rows_matching_codes,
+)
 
 
 def get_all_diagnoses() -> pl.LazyFrame:
@@ -26,11 +29,27 @@ def get_all_diagnoses() -> pl.LazyFrame:
     return concatenated_df
 
 
-def get_diabetes_diagnoses() -> pl.DataFrame:
+def get_diabetes_diagnoses() -> pl.LazyFrame:
     all_diagnoses = get_all_diagnoses()
     diabetes_codes = get_codes(term="diabetes", output_type="disease")
 
-    pass
+    diabetes_diagnoses = get_rows_matching_codes(df=all_diagnoses, codes=diabetes_codes)
+
+    return diabetes_diagnoses
+
+
+def get_first_row_by_patient(
+    df: pl.LazyFrame, datetime_column_name: str, patient_id_column_name: str
+) -> pl.LazyFrame:
+    df = df.with_columns(
+        pl.col(datetime_column_name).min().over(patient_id_column_name).alias("row_max")
+    ).filter(pl.col(datetime_column_name) == pl.col("row_max"))
+
+    without_duplicates = df.unique(
+        subset=[patient_id_column_name, datetime_column_name]
+    )
+
+    return without_duplicates
 
 
 if __name__ == "__main__":
