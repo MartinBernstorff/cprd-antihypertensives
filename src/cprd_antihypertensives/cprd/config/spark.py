@@ -6,9 +6,10 @@ import zipfile
 import pyspark
 from pyspark.sql import SQLContext
 
+
 class spark_init:
     def __init__(self, params, name="ehr"):
-        self._setup_spark(**params)
+        self._setup_spark(**params)  # type: ignore
 
         self.sc, self.sqlContext = self._init_spark(name=name)
 
@@ -29,7 +30,7 @@ class spark_init:
         pyspark_env: pyspark environment, for example '/home/yikuan/anaconda/envs/py3/bin/python3.7'
         temp: dir for saving temporary results for spark, please remember to delete after
         """
-        
+
         # Set pyspark env to active python interpreter
         os.environ["PYSPARK_PYTHON"] = sys.executable
 
