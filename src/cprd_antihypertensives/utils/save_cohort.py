@@ -15,7 +15,7 @@ def save_cohort(risk_cohort, output_type: Literal["spark", "pandas"] = "spark") 
         risk_cohort.write.parquet(f"{cohort_dir}/antihypertensives_in_diabetes")
     elif output_type == "pandas":
         risk_cohort.toPandas().to_parquet(
-            f"{cohort_dir}/antihypertensives_in_diabetes.parquet"
+            f"{cohort_dir}/antihypertensives_in_diabetes.parquet",
         )
     else:
         raise ValueError("Disallowed output_type")

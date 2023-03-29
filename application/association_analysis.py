@@ -21,7 +21,7 @@ from cprd_antihypertensives.utils.save_cohort import save_cohort
 sys.path.insert(0, "/home/mbernstorff/cprd-antihypertensives")
 
 config = load_config(
-    config_path=PROJECT_ROOT / "application" / "config" / "config.yaml"
+    config_path=PROJECT_ROOT / "application" / "config" / "config.yaml",
 )
 
 # %%
