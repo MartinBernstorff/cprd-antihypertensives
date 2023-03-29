@@ -138,7 +138,7 @@ class CohortSoftCut(CausalCohort):
         CohortSoftCut from the causal cohort selection package has everything to select cohort and baseline
         Specifically the baseline for those WITH the exposure is date of exposure, and for those WITHOUT exp of interest is random sampling of baseline
         """
-        
+
         super().__init__(least_year_register_gp, least_age, greatest_age, imdReq)
 
         # exposure is shown as tuple: (format = 'prodcode','ICD10','medcode', 'OPCS')

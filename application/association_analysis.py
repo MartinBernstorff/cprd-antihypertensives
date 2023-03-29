@@ -19,7 +19,7 @@ from cprd_antihypertensives.utils.load_config import load_config
 sys.path.insert(0, "/home/mbernstorff/cprd-antihypertensives")
 
 config = load_config(
-    config_path=PROJECT_ROOT / "application" / "config" / "config.yaml"
+    config_path=PROJECT_ROOT / "application" / "config" / "config.yaml",
 )
 
 # %%
