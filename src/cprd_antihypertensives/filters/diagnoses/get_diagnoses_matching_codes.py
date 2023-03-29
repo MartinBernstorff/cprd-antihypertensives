@@ -12,7 +12,9 @@ class Codes(typing.TypedDict):
 
 
 def get_rows_matching_values(
-    df: pl.LazyFrame, column_name: str, values: Sequence[str],
+    df: pl.LazyFrame,
+    column_name: str,
+    values: Sequence[str],
 ) -> pl.LazyFrame:
     output_df = df.filter(pl.col(column_name).is_in(values))
 
