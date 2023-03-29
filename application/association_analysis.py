@@ -111,14 +111,14 @@ all_diag_timestamps = read_parquet(
 )
 gp_diag_timestamps = all_diag_timestamps[all_diag_timestamps.source == "CPRD"]
 gp_diag_timestamps = gp_diag_timestamps.select(
-    ["patid", "eventdate", "medcode"]
+    ["patid", "eventdate", "medcode"],
 ).withColumnRenamed(
     "medcode",
     "code",
 )
 hes_diag_timestamps = all_diag_timestamps[all_diag_timestamps.source == "HES"]
 hes_diag_timestamps = hes_diag_timestamps.select(
-    ["patid", "eventdate", "ICD"]
+    ["patid", "eventdate", "ICD"],
 ).withColumnRenamed(
     "ICD",
     "code",
