@@ -12,7 +12,6 @@ from cprd_antihypertensives.cprd.functions.MedicalDictionary import (
     MedicalDictionaryRiskPrediction,
 )
 
-def get_rows_matching_
 
 def get_all_diagnoses() -> pl.LazyFrame:
     diag_dir = Path(
