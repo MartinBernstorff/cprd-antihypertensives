@@ -15,7 +15,9 @@ def test_get_rows_matching_values():
     pl_df = str_to_df(input_df)
 
     diabetes_rows = get_rows_matching_values(
-        df=pl_df, column_name="ICD", values=["N832"],
+        df=pl_df,
+        column_name="ICD",
+        values=["N832"],
     )
 
     assert diabetes_rows.collect().shape[0] == 1
