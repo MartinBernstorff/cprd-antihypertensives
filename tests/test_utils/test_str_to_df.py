@@ -17,7 +17,7 @@ datetimes = """patid,datetime,ICD
     "input_df, column_name, column_dtype",
     [(dates, "date", pl.Date), (datetimes, "datetime", pl.Datetime)],
 )
-def test_get_rows_matching_codes(input_df, column_name, column_dtype):
+def test_str_to_df_datetime_parsing(input_df, column_name, column_dtype):
     pl_df = str_to_df(input_df).collect()
 
     # Check that the column is of the correct type

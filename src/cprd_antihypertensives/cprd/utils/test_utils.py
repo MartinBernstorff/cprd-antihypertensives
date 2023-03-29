@@ -4,7 +4,6 @@ import polars as pl
 def str_to_df(
     input_str: str,
     convert_timestamp_to_datetime: bool = True,
-    convert_np_nan_to_nan: bool = True,
     convert_str_to_float: bool = False,
 ) -> pl.LazyFrame:
     """Convert a string representation of a dataframe to a polars lazyframe."""
