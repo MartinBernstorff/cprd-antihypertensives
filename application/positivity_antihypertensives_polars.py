@@ -14,7 +14,7 @@ from cprd_antihypertensives.loaders.load_diagnoses import get_all_diagnoses
 from cprd_antihypertensives.utils.load_config import load_config
 
 config = load_config(
-    config_path=PROJECT_ROOT / "application" / "config" / "config.yaml"
+    config_path=PROJECT_ROOT / "application" / "config" / "config.yaml",
 )
 file_paths = config["file_path"]
 medical_dict = MedicalDictionaryRiskPrediction(file_paths)
@@ -28,9 +28,7 @@ all_diagnoses = get_all_diagnoses()
 
 # %%
 # Save all_diagnoses to parquet
-all_diagnoses.write_parquet(
-    RAW_DATA / "all_diagnoses.parquet"
-)
+all_diagnoses.write_parquet(RAW_DATA / "all_diagnoses.parquet")
 
 # %%
 diabetes_codes = get_codes(term="diabetes", output_type="disease")

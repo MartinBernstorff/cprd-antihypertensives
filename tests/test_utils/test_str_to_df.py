@@ -14,7 +14,7 @@ datetimes = """patid,datetime,ICD
 
 
 @pytest.mark.parametrize(
-    "input_df, column_name, column_dtype",
+    ("input_df", "column_name", "column_dtype"),
     [(dates, "date", pl.Date), (datetimes, "datetime", pl.Datetime)],
 )
 def test_str_to_df_datetime_parsing(input_df, column_name, column_dtype):
